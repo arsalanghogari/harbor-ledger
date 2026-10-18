@@ -11,3 +11,5 @@ services:
         value: "3.13.4"
       - key: HARBOR_SECRET
         generateValue: true
+      - key: HARBOR_DRONE_TOKEN
+        generateValue: true

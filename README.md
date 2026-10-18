@@ -20,6 +20,7 @@ Open http://localhost:8000. The Harbor Night scenario starts on boot.
 | Route | What |
 |---|---|
 | `/` | Start page: what the system does, and sign-in. Every other route needs a session |
+| `/tasks` | Drone taskings published at rung 5, bearer token or authority session (see Drone tasking) |
 | `/watch` | Officer console: map, Hold queue, live status board with per-track history |
 | `/register` | Operator portal: book a dive, instant go / no-go, booking list with out-of-area flags, window extensions and recovery lines |
 | `/control` | Start, pause, reset, 1x / 2x (hidden; for recording) |
@@ -70,6 +71,31 @@ Five contacts over four minutes. Four resolve with no human touch, one reaches t
 
 Counters end at **Resolved without a human: 4 of 5** and **External actions without a human: 0**.
 Then on `/register`, a dive booked over E's keep-out circle gets an instant no-go naming the contact.
+
+## Drone tasking
+
+When the officer picks **Task observation drone**, the system publishes a tasking for that one contact.
+A drone, or any platform, polls it with a bearer token and reports back; nothing is published without
+the officer's release, and the tasking is logged as an external action under their name.
+
+```bash
+curl -H "Authorization: Bearer $HARBOR_DRONE_TOKEN" https://harbor-ledger.onrender.com/tasks
+```
+
+Each tasking carries the live target (`lat`, `lon`, harbor-local `x_m`/`y_m`, `depth_m`, `course_deg`
+as a compass bearing, `speed_mps`), predicted positions at 30, 60 and 120 s, the asset ETA, the standoff
+radius and the objective (`observe`, `photograph`). `GET /tasks/DT-1` refreshes it from the tracker on
+every call, so the drone follows the estimate, not a stale fix. The drone reports with
+
+```bash
+curl -X POST -H "Authorization: Bearer $HARBOR_DRONE_TOKEN" -H "Content-Type: application/json" \
+  -d '{"status": "on_station", "note": "visual on target", "media_url": "https://.../photo.jpg"}' \
+  https://harbor-ledger.onrender.com/tasks/DT-1/report
+```
+
+Statuses: `acknowledged`, `en_route`, `on_station`, `complete`, `cancelled`. Reports land in the audit
+log and on the console row. The token is `HARBOR_DRONE_TOKEN` (Render generates one; locally the server
+prints one at startup if it is unset). Harbor authority sessions can read the same endpoints.
 
 ## How it decides
 

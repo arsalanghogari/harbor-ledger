@@ -1,21 +1,38 @@
 """FastAPI app. The scenario ticks in a background task; the front end polls GET /snapshot at 1 Hz.
 POST /decision, POST /booking, POST /control. The single page is served at /, /watch, /register, /control."""
 import asyncio
+import hmac
 import os
+import secrets
 from dataclasses import asdict
 from contextlib import asynccontextmanager
 from typing import Literal
 
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Cookie, Depends, FastAPI, Header, HTTPException, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .auth import COOKIE, SESSION_S, current_operator, issue, verify
+from .auth import COOKIE, SESSION_S, current_operator, issue, load_users, parse, verify
 from .engine import ROOT, Engine
 
 engine = Engine()
 engine.running = True  # the demo starts on boot; /control reset + start for a clean recording
+
+# Platforms (the observation drone) authenticate with a bearer token, humans with their session.
+DRONE_TOKEN = os.environ.get("HARBOR_DRONE_TOKEN") or secrets.token_urlsafe(24)
+if "HARBOR_DRONE_TOKEN" not in os.environ:
+    print(f"HARBOR_DRONE_TOKEN not set; drone token for this run: {DRONE_TOKEN}", flush=True)
+
+
+def drone_or_authority(authorization: str | None = Header(default=None), harbor_session: str | None = Cookie(default=None)):
+    if authorization and hmac.compare_digest(authorization.removeprefix("Bearer ").strip(), DRONE_TOKEN):
+        return {"username": "drone", "operator": "observation drone", "role": "device"}
+    username = parse(harbor_session) if harbor_session else None
+    user = load_users().get(username) if username else None
+    if user and user.get("role") == "authority":
+        return {"username": username, "operator": user["operator"], "role": "authority"}
+    raise HTTPException(401, "drone bearer token or harbor authority session required")
 
 
 async def loop():
@@ -60,6 +77,12 @@ class BookingIn(BaseModel):
     y_max: float = Coord
     window_start: float = Seconds
     window_end: float = Seconds
+
+
+class ReportIn(BaseModel):
+    status: Literal["acknowledged", "en_route", "on_station", "complete", "cancelled"]
+    note: str = Field(default="", max_length=500)
+    media_url: str = Field(default="", max_length=500)
 
 
 class ControlIn(BaseModel):
@@ -112,6 +135,29 @@ async def me(user: dict = Depends(current_operator)):
 async def booking(b: BookingIn, user: dict = Depends(current_operator)):
     made, why = engine.book(operator=user["operator"], **b.model_dump())
     return {"ok": made is not None, "conflict": why, "booking": engine.booking_json(made) if made else None}
+
+
+@app.get("/tasks")
+async def tasks(all: bool = False, who: dict = Depends(drone_or_authority)):
+    """Published taskings for external platforms; each is refreshed from the live track."""
+    return engine.tasks_json(include_done=all)
+
+
+@app.get("/tasks/{task_id}")
+async def task(task_id: str, who: dict = Depends(drone_or_authority)):
+    found = next((t for t in engine.tasks_json(include_done=True) if t["id"] == task_id[:12]), None)
+    if found is None:
+        raise HTTPException(404, f"no tasking {task_id}")
+    return found
+
+
+@app.post("/tasks/{task_id}/report")
+async def task_report(task_id: str, r: ReportIn, who: dict = Depends(drone_or_authority)):
+    try:
+        engine.report(task_id[:12], r.status, r.note, r.media_url)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    return {"ok": True}
 
 
 @app.post("/control")

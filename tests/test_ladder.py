@@ -1,12 +1,12 @@
 import pytest
 
 from app.engine import Engine
-from app.ladder import HIDDEN_OPTION, OPTIONS
+from app.ladder import DRONE_OPTION, HIDDEN_OPTION, OPTIONS
 
 
 def run(decide=True):
     eng = Engine()
-    snap = eng.run(officer=(lambda card: OPTIONS[1]) if decide else None)
+    snap = eng.run(officer=(lambda card: OPTIONS[2]) if decide else None)
     by_birth = {int(tr.first_seen): tr for tr in eng.tracker.tracks.values() if tr.confirmed}
     return eng, snap, [by_birth[t] for t in (0, 10, 30, 60, 90)]
 
@@ -23,6 +23,7 @@ def test_harbor_night_arc():
     assert E.rung == 5 and E.resolution == "handed_off"
     assert E.card["eta"][0] == "Fuel pier" and E.card["eta"][1] < 120 and "fuel pier" in E.card["headline"]
     assert snap["counters"] == {"auto": 4, "total": 5, "external_without_human": 0, "external_total": 1}
+    assert eng.tasks_json() == []  # the patrol option publishes no drone tasking
     kinds = [e.kind for e in eng.ledger.events]
     assert kinds.index("external_action") > kinds.index("decision")
     assert eng.ledger.decisions[0].officer == "test officer"
@@ -58,3 +59,18 @@ def test_registry_overlap_and_keepout_no_go():
     assert made is None and why == f"keep-out zone around contact {E.id}"
     made, why = eng.book(x_min=-900, y_min=-900, x_max=-800, y_max=-800, **common)
     assert made is not None and why is None and made.id == 4
+
+
+def test_drone_tasking_is_published_on_release_and_takes_reports():
+    eng, _, (*_, E) = run(decide=False)
+    eng.decide(E.id, DRONE_OPTION, "duty officer")
+    tasks = eng.tasks_json()
+    assert len(tasks) == 1 and tasks[0]["track_id"] == E.id and tasks[0]["authorized_by"] == "duty officer"
+    tgt = tasks[0]["target"]
+    assert 33.6 < tgt["lat"] < 33.8 and -118.4 < tgt["lon"] < -118.1 and tgt["live"] and 0 <= tgt["course_deg"] < 360
+    assert [p["s"] for p in tasks[0]["predicted"]] == [30, 60, 120]
+    assert "DT-1" in eng.ladder.external[0]["action"] and eng.ladder.external[0]["officer"] == "duty officer"
+    eng.report("DT-1", "on_station", "visual on target")
+    assert eng.tasks_json()[0]["status"] == "on_station" and eng.ledger.events[-1].kind == "drone_report"
+    eng.report("DT-1", "complete", "photos taken", "https://example.test/photo.jpg")
+    assert eng.tasks_json() == [] and eng.tasks_json(include_done=True)[0]["status"] == "complete"

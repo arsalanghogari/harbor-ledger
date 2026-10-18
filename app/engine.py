@@ -4,7 +4,9 @@ import os
 from dataclasses import asdict
 
 from .feed import Feed
-from .ladder import HIDDEN_OPTION, OPTIONS, Ladder
+import math
+
+from .ladder import HIDDEN_OPTION, OPTIONS, Ladder, bearing
 from .models import Booking, Ledger
 from .registry import Registry
 from .scoring import load_config
@@ -76,6 +78,44 @@ class Engine:
             raise ValueError(f"no live track {track_id}")
         self.ladder.decide(tr, option, officer, note, self.t)
 
+    # --- drone tasking: published after an officer releases it ---------------------------
+    def latlon(self, x, y):
+        o = self.assets_cfg["origin"]
+        return {"lat": round(o["lat"] + y / 111320, 6),
+                "lon": round(o["lon"] + x / (111320 * math.cos(math.radians(o["lat"]))), 6)}
+
+    def task_json(self, task):
+        tr = self.tracker.tracks.get(task.track_id)
+        if tr is not None and tr.ended_at is not None and task.status not in ("complete", "cancelled", "track_lost"):
+            task.status = "track_lost"
+        state = tr.last_fix[0] if tr is not None and tr.ended_at is not None else tr.state
+        x, y, vx, vy = (float(v) for v in state)
+        path = tr.filter.predict_ahead(120)
+        return {"id": task.id, "track_id": task.track_id, "status": task.status, "issued_t": task.t,
+                "issued_clock": f"{2 + int(task.t) // 3600:02d}:{int(task.t) % 3600 // 60:02d}:{int(task.t) % 60:02d}",
+                "authorized_by": task.officer, "objective": task.objective,
+                "target": {"x_m": round(x, 1), "y_m": round(y, 1), **self.latlon(x, y),
+                           "depth_m": round(tr.depth, 1), "course_deg": round(bearing(vx, vy)),
+                           "speed_mps": round(math.hypot(vx, vy), 2), "updated_t": tr.last_seen,
+                           "live": tr.ended_at is None, "rung": tr.rung, "posterior": round(tr.posterior, 2),
+                           "headline": tr.card["headline"] if tr.card else None},
+                "predicted": [{"s": s, **self.latlon(float(path[s][0]), float(path[s][1]))} for s in (30, 60, 120)],
+                "asset_eta": tr.eta, "standoff_m": self.assets_cfg["keepout_radius_m"],
+                "origin": self.assets_cfg["origin"], "reports": task.reports}
+
+    def tasks_json(self, include_done=False):
+        out = [self.task_json(t) for t in self.ledger.tasks]
+        return out if include_done else [t for t in out if t["status"] not in ("complete", "cancelled", "track_lost")]
+
+    def report(self, task_id, status, note="", media_url=""):
+        task = next((t for t in self.ledger.tasks if t.id == task_id), None)
+        if task is None:
+            raise ValueError(f"no tasking {task_id}")
+        task.status = status
+        task.reports.append({"t": self.t, "status": status, "note": note, "media_url": media_url})
+        self.ledger.log(self.t, task.track_id, "drone_report", f"{task.id} {status}" + (f": {note}" if note else "") + (f" [{media_url}]" if media_url else ""))
+        return task
+
     # --- snapshot polled at 1 Hz ---------------------------------------------------------
     def track_json(self, tr):
         path = tr.filter.predict_ahead(60)[::5]
@@ -84,6 +124,7 @@ class Engine:
                 "mode": tr.filter.mode, "modes": tr.filter.modes,
                 "booking_id": tr.matched_booking_id, "resolution": tr.resolution, "decision": tr.decision,
                 "out_of_area": tr.out_of_area,
+                "task": next(({"id": k.id, "status": k.status, "reports": len(k.reports)} for k in self.ledger.tasks if k.track_id == tr.id), None),
                 "pings": tr.pings, "replied": tr.ping_reply is not None, "rung_since": tr.rung_since,
                 "age": self.t - tr.first_seen, "since_contact": self.t - tr.last_seen,
                 "predicted": [[float(x), float(y)] for x, y in path], "eta": tr.eta,

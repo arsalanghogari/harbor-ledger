@@ -61,6 +61,12 @@ Stack: Python 3.13, FastAPI + uvicorn, numpy, scipy, pytest; Leaflet from CDN, v
     label and the operator's booking. Being outside the authorized area is a signal, not a correction.
     The 30 min window extension for a late vehicle is unchanged.
 
+15. **Drone tasking is a rung 5 release, not an automatic publish.** "Task observation drone" is the
+    second-gentlest option on the card. Confirming it publishes a JSON tasking (live lat/lon from the
+    harbor-local origin, compass course, speed, depth, 30/60/120 s predictions, asset ETA) that the drone
+    polls with a bearer token and reports back to. Only that contact's data leaves, and only under the
+    officer's name.
+
 ## What was not built
 
 - Raising the real feed rate at rung 3 (stub event only).

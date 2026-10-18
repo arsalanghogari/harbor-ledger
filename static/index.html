@@ -368,10 +368,12 @@ function renderQueue(s) {
   openCard = c.track_id; openEsc = c.escalated_at;
   const pct = Math.round(c.posterior * 100);
   const reasons = c.reasons.map(r => r === 'heading for a protected asset' && c.eta ? `heading for the ${c.eta[0].toLowerCase()}` : r);
-  const ask = ['Keep watching and re-ping?', 'Send the patrol notice draft?', 'Notify the Coast Guard, channel open?', 'Close the channel? A reason is required.'];
+  const ask = ['Keep watching and re-ping?', 'Publish its live position for the observation drone?', 'Send the patrol notice draft?',
+    'Notify the Coast Guard, channel open?', 'Close the channel? A reason is required.'];
+  const H = c.options.length;  // the hidden option's index
   const detail = i => `<div class="detail" id="detail-${i}">
       <div>${pct}% sure it's unauthorized, ${reasons.map(esc).join(', ')}. ${esc(ask[i])}</div>
-      ${i === 3 ? '<input id="reason" placeholder="Reason for closing the channel" maxlength="500">' : ''}
+      ${i === H ? '<input id="reason" placeholder="Reason for closing the channel" maxlength="500">' : ''}
       <button class="confirm" onclick="decide('${esc(c.track_id)}', ${i})">Confirm</button>
     </div>`;
   q.innerHTML = `${s.queue.length > 1 ? `<p class="hint">+${s.queue.length - 1} more waiting</p>` : ''}<div class="card">
@@ -381,7 +383,7 @@ function renderQueue(s) {
     <div class="meta">${esc(c.track_id)} · (${Math.round(c.x)}, ${Math.round(c.y)}) m · ${c.speed.toFixed(1)} m/s · ${c.depth.toFixed(0)} m deep</div>
     <div class="buttons">
       ${c.options.map((o, i) => `<button class="opt" id="opt-${i}" onclick="pick(${i})"><span class="n">${i + 1}</span>${esc(o)}</button>${detail(i)}`).join('')}
-      <button class="opt ghost" id="opt-3" onclick="pick(3)">More options</button>${detail(3)}
+      <button class="opt ghost" id="opt-${H}" onclick="pick(${H})">More options</button>${detail(H)}
     </div>
     <div class="err" id="decide-err"></div>
   </div>`;
@@ -392,10 +394,11 @@ function pick(i) {
 }
 
 async function decide(trackId, i) {
-  const option = i < 3 ? snap.options[i] : snap.hidden_option;
-  const note = i === 3 ? (document.getElementById('reason')?.value || '') : '';
+  const H = snap.options.length;
+  const option = i < H ? snap.options[i] : snap.hidden_option;
+  const note = i === H ? (document.getElementById('reason')?.value || '') : '';
   const err = document.getElementById('decide-err');
-  if (i === 3 && !note.trim()) { err.textContent = 'Type a reason before closing the channel.'; return; }
+  if (i === H && !note.trim()) { err.textContent = 'Type a reason before closing the channel.'; return; }
   const r = await fetch('/decision', {method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({track_id: trackId, option, note})});
   if (!r.ok) err.textContent = (await r.json()).detail || 'refused';
@@ -410,7 +413,7 @@ function nowText(s, t, known) {
     case 2: return t.replied ? 'asked · reply received, reconciling' : `asked · ping sent ${ago(s.t - t.rung_since)} ago, no reply`;
     case 3: return `slowing · advisory and patrol notice drafted, not sent · ${t.pings} pings, no reply${eta}`;
     case 4: return `hold · with the officer for ${ago(s.t - t.rung_since)}${eta}`;
-    default: return `handed off · ${esc(t.decision || '')}`;
+    default: return `handed off · ${esc(t.decision || '')}` + (t.task ? ` · <span class="flag">drone ${esc(t.task.status.replace('_', ' '))}${t.task.reports ? ` (${t.task.reports} reports)` : ''}</span>` : '');
   }
 }
 const expanded = new Set(), histories = {};

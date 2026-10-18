@@ -107,14 +107,27 @@ class Event:
     detail: str
 
 
+@dataclass
+class Task:
+    """A tasking published for an external platform (observation drone) after an officer's release."""
+    id: str
+    track_id: str
+    t: float
+    officer: str
+    objective: list
+    status: str = "published"   # published, acknowledged, en_route, on_station, complete, cancelled, track_lost
+    reports: list = field(default_factory=list)
+
+
 class Ledger:
-    """The five tables as lists and dicts."""
+    """The tables as lists and dicts."""
 
     def __init__(self):
         self.bookings: list[Booking] = []
         self.tracks: dict[str, Track] = {}
         self.decisions: list[Decision] = []
         self.events: list[Event] = []
+        self.tasks: list[Task] = []
 
     def log(self, t, track_id, kind, detail) -> Event:
         e = Event(len(self.events) + 1, t, track_id, kind, detail)
@@ -129,4 +142,5 @@ class Ledger:
         with open(path, "w") as f:
             json.dump({"events": [asdict(e) for e in self.events],
                        "decisions": [asdict(d) for d in self.decisions],
+                       "tasks": [asdict(t) for t in self.tasks],
                        "bookings": [asdict(b) for b in self.bookings]}, f, indent=1)

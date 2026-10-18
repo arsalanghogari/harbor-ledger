@@ -7,7 +7,9 @@ from .registry import EXTEND_MIN
 from .scoring import asset_eta, score
 from .tracker import drift_cone
 
-OPTIONS = ["Keep watching and re-ping", "Send patrol boat to observe", "Notify Coast Guard, keep channel open"]
+OPTIONS = ["Keep watching and re-ping", "Task observation drone", "Send patrol boat to observe",
+           "Notify Coast Guard, keep channel open"]
+DRONE_OPTION = OPTIONS[1]
 HIDDEN_OPTION = "Close channel"  # behind a second click; needs a typed reason
 UNMATCHED_S = 15     # rung 1 -> 2 after this long with no registry match
 PING_TIMEOUT_S = 10  # silence declared this long after the first ping
@@ -15,6 +17,11 @@ ASK_P = 0.5          # rung 2 -> 3 posterior threshold (with silence)
 HOLD_P = 0.8         # rung 3 -> 4 posterior threshold
 HOLD_ETA_S = 120     # rung 3 -> 4 when an asset standoff zone is this close
 HOLD_TIMEOUT_S = 90  # rung 4 with no click: re-push to duty supervisor
+
+
+def bearing(vx, vy) -> float:
+    """Compass bearing of a velocity: 0 = north, 90 = east."""
+    return (90 - math.degrees(math.atan2(vy, vx))) % 360
 
 
 class Ladder:
@@ -87,7 +94,7 @@ class Ladder:
         if rung == 2:
             self.send_ping(tr, t)
         elif rung == 3:
-            hdg = math.degrees(math.atan2(tr.vy, tr.vx)) % 360
+            hdg = bearing(tr.vx, tr.vy)
             tr.drafts = [
                 f"Vessel advisory (draft, not sent): unidentified contact {tr.id} near ({tr.x:.0f}, {tr.y:.0f}); "
                 f"vessels within {self.keepout} m keep clear",
@@ -164,7 +171,7 @@ class Ladder:
         tr.resolution = tr.resolution or "lost"
         tr.cone = drift_cone(tr)
         x, y, vx, vy = tr.last_fix[0]
-        hdg = math.degrees(math.atan2(vy, vx)) % 360
+        hdg = bearing(vx, vy)
         c2, c5 = tr.cone[0], tr.cone[1]
         cone = (f"last fixed at ({x:.0f}, {y:.0f}) t={tr.last_seen:.0f}, drifting {math.hypot(vx, vy):.2f} m/s on {hdg:.0f} deg; "
                 f"search {c2['radius']:.0f} m around ({c2['x']:.0f}, {c2['y']:.0f}) within 2 min, {c5['radius']:.0f} m within 5 min")
@@ -190,9 +197,20 @@ class Ladder:
         self.log(t, tr, "decision", f"{officer} chose: {option}" + (f" ({note})" if note else ""))
         if option == OPTIONS[0]:
             self.send_ping(tr, t)
+        elif option == DRONE_OPTION:
+            self.task_drone(tr, t, officer)
         else:
             self.release(tr, t, option, officer)
         self.log(t, tr, "rung_change", "rung 5: handed off; automation stopped on this track")
+
+    def task_drone(self, tr, t, officer):
+        """Publish a tasking the observation drone polls: live target position, course, speed and
+        predicted path. The only data that leaves is about this one unauthorized contact."""
+        from .models import Task
+        task = Task(f"DT-{len(self.ledger.tasks) + 1}", tr.id, t, officer, ["observe", "photograph"])
+        self.ledger.tasks.append(task)
+        self.release(tr, t, f"{DRONE_OPTION}: tasking {task.id} published for {tr.id}", officer)
+        return task
 
     def release(self, tr, t, action, officer):
         """The only place anything leaves the system. Stub: logs it with the authorizing name."""

@@ -470,6 +470,80 @@ function renderBookingTable(s) {
   document.getElementById('bookings').innerHTML = rows ? `<tr><th>#</th><th>Vehicle</th><th>Box (m)</th><th>Window</th><th>Status</th></tr>${rows}` : '<tr><td class="sub">No bookings yet</td></tr>';
 }
 
+// Start page: a live sonar. Contacts drift, climb the rungs and resolve; the sweep blips them;
+// hover identifies, click pings (tags it known). Rung hover in the list spotlights that rung.
+function startSonar(canvas) {
+  const ctx = canvas.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COLORS = {0: '#6fd48a', 1: '#9aa3b2', 2: '#5b8def', 3: '#e8b23a', 4: '#ef5350'};
+  const NAMES = {0: 'Known', 1: 'Watch', 2: 'Ask', 3: 'Slow', 4: 'Hold'};
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  let W, H, cx, cy, R, sweep = 0, last = performance.now(), hover = null, focus = null, n = 0, story = 0;
+  const contacts = [];
+  const spawn = () => contacts.push({id: `T-${++n}`, r: 0.22 + Math.random() * 0.7, a: Math.random() * Math.PI * 2,
+    vr: (Math.random() - 0.5) * 0.02, va: (Math.random() - 0.5) * 0.07, rung: 1, blip: 0, since: 0, fade: 1});
+  const pos = c => [cx + Math.cos(c.a) * c.r * R, cy + Math.sin(c.a) * c.r * R];
+  function resize() {
+    const b = canvas.getBoundingClientRect();
+    W = canvas.width = Math.max(1, b.width * dpr); H = canvas.height = Math.max(1, b.height * dpr);
+    cx = W * (W > 900 * dpr ? 0.36 : 0.5); cy = H * 0.5; R = Math.min(W * 0.34, H * 0.46);
+  }
+  for (let i = 0; i < 7; i++) spawn();
+  function tick(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const prev = sweep; sweep = (sweep + dt * 0.75) % (Math.PI * 2);
+    if ((story += dt) > 2.2) { story = 0; const c = contacts[Math.floor(Math.random() * contacts.length)]; if (c.rung >= 1 && c.rung < 4 && Math.random() < 0.75) { c.rung++; c.since = 0; } }
+    for (const c of contacts) {
+      c.a += c.va * dt; c.r += c.vr * dt; if (c.r < 0.15 || c.r > 0.95) c.vr *= -1;
+      c.since += dt;
+      const a = ((c.a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      if ((prev <= a && a < sweep) || (prev > sweep && (a >= prev || a < sweep))) c.blip = 1;
+      c.blip = Math.max(0, c.blip - dt * 0.9);
+      if (c.rung === 4 && c.since > 7) { c.rung = 0; c.since = 0; }
+      if (c.rung === 0 && c.since > 1.5) c.fade = Math.max(0, c.fade - dt * 0.6);
+    }
+    for (let i = contacts.length - 1; i >= 0; i--) if (contacts[i].fade <= 0) { if (hover === contacts[i]) hover = null; contacts.splice(i, 1); spawn(); }
+    draw();
+    if (!reduce) requestAnimationFrame(tick);
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.lineWidth = dpr;
+    ctx.strokeStyle = 'rgba(127, 211, 232, 0.10)';
+    for (let k = 1; k <= 4; k++) { ctx.beginPath(); ctx.arc(cx, cy, R * k / 4, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+    if (ctx.createConicGradient) {
+      const g = ctx.createConicGradient(sweep - 1.1, cx, cy);
+      g.addColorStop(0, 'rgba(127, 211, 232, 0)'); g.addColorStop(0.174, 'rgba(127, 211, 232, 0.14)'); g.addColorStop(0.176, 'rgba(127, 211, 232, 0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(127, 211, 232, 0.55)';
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(sweep) * R, cy + Math.sin(sweep) * R); ctx.stroke();
+    for (const c of contacts) {
+      const [x, y] = pos(c), col = COLORS[c.rung], vis = (focus === null || c.rung === focus ? 1 : 0.15) * c.fade;
+      if (c.blip > 0) { ctx.globalAlpha = vis * c.blip * 0.7; ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(x, y, (4 + (1 - c.blip) * 18) * dpr, 0, Math.PI * 2); ctx.stroke(); }
+      if (c.rung >= 3) { ctx.globalAlpha = vis * 0.45; ctx.strokeStyle = col; ctx.setLineDash([3 * dpr, 4 * dpr]); ctx.beginPath(); ctx.arc(x, y, 20 * dpr, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.globalAlpha = vis; ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(x, y, (c === hover ? 5.5 : 3.5) * dpr, 0, Math.PI * 2); ctx.fill();
+      if (c === hover || c.rung === 4) {
+        ctx.font = `500 ${12 * dpr}px "IBM Plex Mono", monospace`; ctx.fillStyle = c === hover ? '#e6edf3' : col;
+        ctx.fillText(`${c.id} · ${NAMES[c.rung]}`, x + 10 * dpr, y - 8 * dpr);
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+  canvas.addEventListener('mousemove', e => {
+    const b = canvas.getBoundingClientRect(), mx = (e.clientX - b.left) * dpr, my = (e.clientY - b.top) * dpr;
+    hover = contacts.find(c => { const [x, y] = pos(c); return Math.hypot(x - mx, y - my) < 18 * dpr; }) || null;
+    canvas.style.cursor = hover ? 'pointer' : 'default';
+  });
+  canvas.addEventListener('mouseleave', () => { hover = null; });
+  canvas.addEventListener('click', () => { if (hover) { hover.blip = 1; hover.rung = 0; hover.since = 0; } });
+  resize(); addEventListener('resize', resize); requestAnimationFrame(tick);
+  return {focus: r => { focus = r; }};
+}
+let sonar = {focus() {}};
+
 let me = null;
 async function whoami() {
   const r = await fetch('/me');

@@ -634,8 +634,8 @@ function renderStatus(s) {
 function renderHeader(s) {
   const el = document.getElementById('clock');
   el.className = 'clock';
-  const c = s.counts, state = s.running ? '' : s.t >= s.end ? ' · scenario complete' : ' · paused';
-  el.innerHTML = `${clock(s.t)} · ${c.registered} registered · ${c.unknown} unknown · ${c.nominal} nominal${c.lost ? ` · ${c.lost} lost` : ''}${s.speed !== 1 ? ` · ${s.speed}x` : ''}${state}`;
+  const c = s.counts;
+  el.innerHTML = `${c.registered} registered · ${c.unknown} unknown · ${c.nominal} nominal${c.lost ? ` · ${c.lost} lost` : ''}${s.speed !== 1 ? ` · ${s.speed}x` : ''}${s.running || s.t >= s.end ? '' : ' · paused'}`;
 }
 
 const expandedBookings = new Set();

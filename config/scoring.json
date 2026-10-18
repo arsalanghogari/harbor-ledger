@@ -1,0 +1,43 @@
+{
+  "prior": 0.1,
+  "clamp": [
+    0.01,
+    0.99
+  ],
+  "features": {
+    "unmatched": {
+      "yes": 8.0,
+      "no": 0.05,
+      "text_yes": "no booking covers this position and time",
+      "text_no": "matches a registered booking",
+      "short_yes": "no booking",
+      "short_no": "booked"
+    },
+    "silent": {
+      "yes": 6.0,
+      "no": 0.0333,
+      "text_yes": "silent 10 s after acoustic ID ping",
+      "text_no": "answered the acoustic ID ping",
+      "short_yes": "no reply after 10 s",
+      "short_no": "answered the ping"
+    },
+    "heading": {
+      "yes": 3.0,
+      "no": 0.667,
+      "text_yes": "predicted to enter a protected standoff zone within 120 s",
+      "text_no": "not heading toward a protected asset",
+      "short_yes": "heading for a protected asset",
+      "short_no": "not heading for an asset"
+    },
+    "maneuver": {
+      "yes": 2.5,
+      "no": 0.5,
+      "text_yes": "holding a deliberate course change (IMM maneuver models dominant 10 s)",
+      "text_no": "drifting; no deliberate maneuver seen",
+      "short_yes": "deliberate maneuver",
+      "short_no": "drifting"
+    }
+  },
+  "maneuver_threshold": 0.6,
+  "maneuver_hold_s": 10
+}

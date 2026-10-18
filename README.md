@@ -1,0 +1,87 @@
+# Harbor Ledger
+
+Registry-first triage for unidentified autonomous underwater vehicles in a working harbor.
+Every sonar contact is checked against a ledger of registered dives before anything escalates:
+known vehicles become non-events, unknown ones climb a five-rung ladder, and the watch officer
+only sees the contacts that need a human decision. Nothing with an external effect leaves the
+system without a named human's click.
+
+## Run
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/uvicorn app.main:app
+```
+
+Open http://localhost:8000. The Harbor Night scenario starts on boot.
+
+| Route | What |
+|---|---|
+| `/` | Start page: what the system does, and sign-in. Every other route needs a session |
+| `/watch` | Officer console: map, Hold queue, live status board with per-track history |
+| `/register` | Operator portal: book a dive, instant go / no-go, booking list with system amendments and recovery lines |
+| `/control` | Start, pause, reset, 1x / 2x (hidden; for recording) |
+| `GET /snapshot` | Full state once a second; the page just renders it |
+
+Sign-in: the start page signs in harbor staff and operators; decisions are logged under the signed-in name and bookings are stamped with it. `python -m app.auth seed` writes three demo accounts
+(passwords land in `config/DEMO_ACCOUNTS.md`); `python -m app.auth add <username> "<Operator>"` adds one.
+Sessions are HMAC-signed cookies; set `HARBOR_SECRET` to keep them across restarts.
+
+Headless replay with the event log printed and dumped to `scenarios/harbor_night.events.json`:
+
+```bash
+.venv/bin/python -m app.engine
+```
+
+Tests:
+
+```bash
+.venv/bin/python -m pytest -q
+```
+
+## The ladder
+
+| Rung | Enter when | Autonomous action (no external effect) | Exit |
+|---|---|---|---|
+| 1 Watch | New confirmed track | Log, run IMM, check registry | Match: stays 1, tagged known. No match 15 s: rung 2 |
+| 2 Ask | Unmatched 15 s | Acoustic ID ping (cooperative handshake), 10 s timer | Valid reply: reconcile. Silence and posterior > 0.5: rung 3 |
+| 3 Slow | Posterior > 0.5 | Tighten the watch, second ping, draft the vessel advisory and patrol notice but send nothing, pre-compute standoff ETA | Reply: reconcile. Posterior > 0.8 or asset ETA < 120 s: rung 4 |
+| 4 Hold | Posterior > 0.8 or ETA < 120 s | Push the card to the officer. 90 s with no click: re-push to the duty supervisor, still no action | Officer clicks: rung 5 |
+| 5 Hand off | Officer decision | Log the Decision under the officer's name, release the chosen drafted action (stub), stop automation | Terminal |
+
+Reconciliation on a valid ping reply is autonomous: inside the booked box and window it is matched;
+drifted outside the box, the box is amended; late, the window is extended once by 30 min.
+
+## Harbor Night
+
+Five contacts over four minutes. Four resolve with no human touch, one reaches the officer.
+
+| Contact | Truth | What happens |
+|---|---|---|
+| A | USC glider, registered, inside box | Registry match at t+2 s, tagged known |
+| B | Inspection ROV, 80 m outside its box | Rung 2 at t+15, answers the ping, box amended, back to rung 1 |
+| C | Research AUV, window ended 20 min ago, then silent | Window extended, back to rung 1; lost at t+140 with a drift cone and a "send recovery here" line |
+| D | Debris drifting with the current | Rung 3, posterior plateaus at 0.64, lost after 20 s silent, drift cone kept |
+| E | Unknown AUV, 1.5 m/s toward the fuel pier, one 30 degree turn | Rung 1 to 4, card: "Unknown vehicle, 115 s from fuel pier, no reply to ID ping." One click |
+
+Counters end at **Resolved without a human: 4 of 5** and **External actions without a human: 0**.
+Then on `/register`, a dive booked over E's keep-out circle gets an instant no-go naming the contact.
+
+## How it decides
+
+- `app/imm.py`: IMM estimator, four linear Kalman models (CV-quiet q=0.02, CV-agile q=0.5, two coordinated turns at ±0.08 rad/s), Markov 0.95 diagonal, depth as a separate 1D filter.
+- `app/tracker.py`: chi-square 9.21 gating, Hungarian assignment (scipy), existence score with 3-of-5 confirmation and deletion after ~20 misses, drift cone grown 10 min under CV-quiet.
+- `app/scoring.py`: naive-Bayes log-odds over four features (registry match, ping reply, heading to asset, maneuver evidence). Ratios in `config/scoring.json`.
+- `app/ladder.py`: the rung machine, drafted actions, the 90 s timeout, `reconcile()`.
+- `app/registry.py`: bookings, overlap and keep-out checks, amend and extend.
+- `app/feed.py`: the only mock sensor. `python -m app.feed` regenerates the scenario.
+
+Positions are harbor-local meters (east, north); the map layer converts to lat/lon around `config/assets.json` origin.
+
+## Responsible use
+
+Misuse: the tracker and scorer could be pointed at legitimate research vehicles to harass or deny access,
+the registry could leak dive schedules, and the maneuver feature could escalate unfamiliar vehicle classes
+more often than familiar ones. Limits: nothing with an external effect leaves the system without a named
+human's click and a log entry; the registry is opt-in and visible only to the harbor authority and the
+booking operator; the acoustic ID check is a cooperative handshake, not a tracking beacon.

@@ -1,0 +1,340 @@
+{
+ "events": [
+  {
+   "id": 1,
+   "t": 2,
+   "track_id": "T-1",
+   "kind": "contact",
+   "detail": "new confirmed track at (-251, -352) depth 15 m"
+  },
+  {
+   "id": 2,
+   "t": 2,
+   "track_id": "T-1",
+   "kind": "reconciled",
+   "detail": "tagged known: registry match BK-1 (USC AUV Lab, usc-glider-07)"
+  },
+  {
+   "id": 3,
+   "t": 12,
+   "track_id": "T-2",
+   "kind": "contact",
+   "detail": "new confirmed track at (383, 401) depth 8 m"
+  },
+  {
+   "id": 4,
+   "t": 25,
+   "track_id": "T-2",
+   "kind": "rung_change",
+   "detail": "rung 2: no registry match for 15 s"
+  },
+  {
+   "id": 5,
+   "t": 25,
+   "track_id": "T-2",
+   "kind": "ping_sent",
+   "detail": "acoustic ID ping 1 sent (cooperative handshake)"
+  },
+  {
+   "id": 6,
+   "t": 28,
+   "track_id": "T-2",
+   "kind": "ping_reply",
+   "detail": "reply ping_id=PIN-ROV-2"
+  },
+  {
+   "id": 7,
+   "t": 28,
+   "track_id": "T-2",
+   "kind": "reconciled",
+   "detail": "BK-2 pin-rov-2: vehicle answered ping 77 m outside booked box; box extended by system"
+  },
+  {
+   "id": 8,
+   "t": 28,
+   "track_id": "T-2",
+   "kind": "reconciled",
+   "detail": "tagged known: ping reply reconciled with BK-2 (Pacific Hull Inspection, pin-rov-2)"
+  },
+  {
+   "id": 9,
+   "t": 28,
+   "track_id": "T-2",
+   "kind": "rung_change",
+   "detail": "rung 1: known vehicle, automation stands down"
+  },
+  {
+   "id": 10,
+   "t": 32,
+   "track_id": "T-3",
+   "kind": "contact",
+   "detail": "new confirmed track at (-47, 1) depth 25 m"
+  },
+  {
+   "id": 11,
+   "t": 45,
+   "track_id": "T-3",
+   "kind": "rung_change",
+   "detail": "rung 2: no registry match for 15 s"
+  },
+  {
+   "id": 12,
+   "t": 45,
+   "track_id": "T-3",
+   "kind": "ping_sent",
+   "detail": "acoustic ID ping 1 sent (cooperative handshake)"
+  },
+  {
+   "id": 13,
+   "t": 48,
+   "track_id": "T-3",
+   "kind": "ping_reply",
+   "detail": "reply ping_id=SIO-AUV-3"
+  },
+  {
+   "id": 14,
+   "t": 48,
+   "track_id": "T-3",
+   "kind": "reconciled",
+   "detail": "BK-3 sio-auv-3: vehicle answered ping 20 min after window; extended 30 min by system"
+  },
+  {
+   "id": 15,
+   "t": 48,
+   "track_id": "T-3",
+   "kind": "reconciled",
+   "detail": "tagged known: ping reply reconciled with BK-3 (Scripps Research, sio-auv-3)"
+  },
+  {
+   "id": 16,
+   "t": 48,
+   "track_id": "T-3",
+   "kind": "rung_change",
+   "detail": "rung 1: known vehicle, automation stands down"
+  },
+  {
+   "id": 17,
+   "t": 62,
+   "track_id": "T-4",
+   "kind": "contact",
+   "detail": "new confirmed track at (302, -501) depth 2 m"
+  },
+  {
+   "id": 18,
+   "t": 75,
+   "track_id": "T-4",
+   "kind": "rung_change",
+   "detail": "rung 2: no registry match for 15 s"
+  },
+  {
+   "id": 19,
+   "t": 75,
+   "track_id": "T-4",
+   "kind": "ping_sent",
+   "detail": "acoustic ID ping 1 sent (cooperative handshake)"
+  },
+  {
+   "id": 20,
+   "t": 85,
+   "track_id": "T-4",
+   "kind": "rung_change",
+   "detail": "rung 3: silent after ping, posterior 0.64"
+  },
+  {
+   "id": 21,
+   "t": 85,
+   "track_id": "T-4",
+   "kind": "drafted",
+   "detail": "Vessel advisory (draft, not sent): unidentified contact T-4 near (303, -499); vessels within 300 m keep clear"
+  },
+  {
+   "id": 22,
+   "t": 85,
+   "track_id": "T-4",
+   "kind": "drafted",
+   "detail": "Patrol notice (draft, not sent): harbor patrol to observe contact T-4 at (303, -499), course 46 deg, 0.1 m/s"
+  },
+  {
+   "id": 23,
+   "t": 85,
+   "track_id": "T-4",
+   "kind": "rung_change",
+   "detail": "watch tightened on T-4: feed rate raised (stub), standoff ETA pre-computed"
+  },
+  {
+   "id": 24,
+   "t": 85,
+   "track_id": "T-4",
+   "kind": "ping_sent",
+   "detail": "acoustic ID ping 2 sent (cooperative handshake)"
+  },
+  {
+   "id": 25,
+   "t": 92,
+   "track_id": "T-5",
+   "kind": "contact",
+   "detail": "new confirmed track at (173, -453) depth 12 m"
+  },
+  {
+   "id": 26,
+   "t": 105,
+   "track_id": "T-5",
+   "kind": "rung_change",
+   "detail": "rung 2: no registry match for 15 s"
+  },
+  {
+   "id": 27,
+   "t": 105,
+   "track_id": "T-5",
+   "kind": "ping_sent",
+   "detail": "acoustic ID ping 1 sent (cooperative handshake)"
+  },
+  {
+   "id": 28,
+   "t": 115,
+   "track_id": "T-5",
+   "kind": "rung_change",
+   "detail": "rung 3: silent after ping, posterior 0.64"
+  },
+  {
+   "id": 29,
+   "t": 115,
+   "track_id": "T-5",
+   "kind": "drafted",
+   "detail": "Vessel advisory (draft, not sent): unidentified contact T-5 near (202, -431); vessels within 300 m keep clear"
+  },
+  {
+   "id": 30,
+   "t": 115,
+   "track_id": "T-5",
+   "kind": "drafted",
+   "detail": "Patrol notice (draft, not sent): harbor patrol to observe contact T-5 at (202, -431), course 56 deg, 1.5 m/s"
+  },
+  {
+   "id": 31,
+   "t": 115,
+   "track_id": "T-5",
+   "kind": "rung_change",
+   "detail": "watch tightened on T-5: feed rate raised (stub), standoff ETA pre-computed"
+  },
+  {
+   "id": 32,
+   "t": 115,
+   "track_id": "T-5",
+   "kind": "ping_sent",
+   "detail": "acoustic ID ping 2 sent (cooperative handshake)"
+  },
+  {
+   "id": 33,
+   "t": 141,
+   "track_id": "T-4",
+   "kind": "lost",
+   "detail": "no contact for 20 s at rung 3; logged as lost. Drift cone kept for patrol: T-4 last fixed at (311, -497) t=120, drifting 0.49 m/s on 18 deg; search 119 m around (367, -479) within 2 min, 443 m within 5 min"
+  },
+  {
+   "id": 34,
+   "t": 165,
+   "track_id": "T-5",
+   "kind": "rung_change",
+   "detail": "rung 4: posterior 0.89"
+  },
+  {
+   "id": 35,
+   "t": 165,
+   "track_id": "T-5",
+   "kind": "rung_change",
+   "detail": "card pushed to officer: Unknown vehicle, 115 s from fuel pier, no reply to ID ping."
+  },
+  {
+   "id": 36,
+   "t": 166,
+   "track_id": "T-5",
+   "kind": "decision",
+   "detail": "test officer chose: Send patrol boat to observe"
+  },
+  {
+   "id": 37,
+   "t": 166,
+   "track_id": "T-5",
+   "kind": "external_action",
+   "detail": "released (stub): Send patrol boat to observe; authorized by test officer"
+  },
+  {
+   "id": 38,
+   "t": 166,
+   "track_id": "T-5",
+   "kind": "rung_change",
+   "detail": "rung 5: handed off; automation stopped on this track"
+  },
+  {
+   "id": 39,
+   "t": 171,
+   "track_id": "T-3",
+   "kind": "lost",
+   "detail": "no contact for 20 s at rung 1; logged as lost. Send recovery here: sio-auv-3 (BK-3) last fixed at (21, 25) t=150, drifting 0.48 m/s on 29 deg; search 118 m around (71, 52) within 2 min, 441 m within 5 min"
+  }
+ ],
+ "decisions": [
+  {
+   "id": 1,
+   "track_id": "T-5",
+   "t": 166,
+   "options_offered": [
+    "Keep watching and re-ping",
+    "Send patrol boat to observe",
+    "Notify Coast Guard, keep channel open",
+    "Close channel"
+   ],
+   "option_chosen": "Send patrol boat to observe",
+   "officer": "test officer",
+   "note": ""
+  }
+ ],
+ "bookings": [
+  {
+   "id": 1,
+   "operator": "USC AUV Lab",
+   "vehicle_id": "usc-glider-07",
+   "ping_id": "USC-GL-07",
+   "x_min": -350,
+   "y_min": -450,
+   "x_max": -50,
+   "y_max": -150,
+   "window_start": -600,
+   "window_end": 3000,
+   "status": "scheduled",
+   "extended": 0,
+   "note": ""
+  },
+  {
+   "id": 2,
+   "operator": "Pacific Hull Inspection",
+   "vehicle_id": "pin-rov-2",
+   "ping_id": "PIN-ROV-2",
+   "x_min": 100,
+   "y_min": 300,
+   "x_max": 396.65495539866305,
+   "y_max": 500,
+   "window_start": -900,
+   "window_end": 2400,
+   "status": "amended",
+   "extended": 0,
+   "note": "vehicle answered ping 77 m outside booked box; box extended by system"
+  },
+  {
+   "id": 3,
+   "operator": "Scripps Research",
+   "vehicle_id": "sio-auv-3",
+   "ping_id": "SIO-AUV-3",
+   "x_min": -200,
+   "y_min": -150,
+   "x_max": 100,
+   "y_max": 150,
+   "window_start": -4800,
+   "window_end": 630,
+   "status": "amended",
+   "extended": 1,
+   "note": "vehicle answered ping 20 min after window; extended 30 min by system"
+  }
+ ]
+}

@@ -1,0 +1,9 @@
+{
+  "origin": {"lat": 33.7173, "lon": -118.2642},
+  "keepout_radius_m": 300,
+  "assets": [
+    {"name": "Cruise berth",  "polygon": [[-900, 300], [-500, 300], [-500, 700], [-900, 700]], "standoff_m": 150},
+    {"name": "Fuel pier",     "polygon": [[500, -150], [900, -150], [900, 150], [500, 150]],   "standoff_m": 200},
+    {"name": "Research dock", "polygon": [[-700, -700], [-400, -700], [-400, -500], [-700, -500]], "standoff_m": 100}
+  ]
+}

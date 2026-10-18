@@ -1,0 +1,22 @@
+{
+  "officer": {
+    "operator": "Port of LA Watch Officer",
+    "salt": "e79d11b00b63c45faa389bce46614a75",
+    "hash": "8d17d804627f18cea2949ef64b0b62373fd56d20bcf44b327e6a9522bc0bf457518b7802081013def9fb17edb55b029f3af57018462cddb034b9014a93c3a4d1"
+  },
+  "usc": {
+    "operator": "USC AUV Lab",
+    "salt": "f14dac0febd7560f0e72cc165c49dada",
+    "hash": "1007ee8877a7146b3d0233494bc93913250d9d02cc5939e14de5bebe650d8aa2df5b5de03288db68a46382659e76d561213d03775dae6ec023f1218e6aa25ecb"
+  },
+  "pacific": {
+    "operator": "Pacific Hull Inspection",
+    "salt": "c1fa7d21d0777c244b3f6b7c9dafb793",
+    "hash": "d6d9dc80724423b75e755c81932ebc2136aa982261da7e9139d4d36e9a07ed19dddd454255c794b5273d244fe17128b1d787a5b4b3a7ac83e4f14b01c9d56f1a"
+  },
+  "scripps": {
+    "operator": "Scripps Research",
+    "salt": "94157434b01e7a5dffc046f790bf1585",
+    "hash": "21f3e64cee7f3f15ed9f668734cef776b3d53e06e2cb7f84fb385a848fa751b9c16cca61e1652c32090b57d3c6917a7f2d3ffe2c11786f91109687f1a8737c54"
+  }
+}

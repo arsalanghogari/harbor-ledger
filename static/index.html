@@ -130,6 +130,7 @@
   .intro { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 56px; max-width: 1060px; width: 100%; align-items: start; }
   .intro h1 { font-size: 34px; line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 14px; text-wrap: balance; }
   .intro p { color: var(--ink-2); margin: 0 0 22px; max-width: 60ch; text-wrap: pretty; }
+  .intro .sub { font-size: 18px; color: var(--ink-2); margin: -4px 0 18px; }
   .ladder { list-style: none; margin: 8px 0 0; padding: 0; display: flex; gap: 0; }
   .ladder li { background: linear-gradient(var(--bg), transparent 80%); }
   .ladder li { flex: 1; padding: 10px 12px 0 0; border-top: 2px solid var(--line); font-size: 13px; color: var(--ink-2); }
@@ -201,19 +202,20 @@
   <canvas id="sonar" aria-hidden="true"></canvas>
   <div class="intro">
     <div class="copy">
-      <h1>Registry-first triage for unidentified underwater vehicles.</h1>
+      <h1>Unknown vehicle in your harbor? Track it.</h1>
+      <p class="sub">Most contacts are booked. We find the one that isn't.</p>
       <ol class="ladder">
-        <li onmouseenter="sonar.focus(1)" onmouseleave="sonar.focus(null)"><b><i style="background:#9aa3b2"></i>Watch</b>log, track, check the registry</li>
-        <li onmouseenter="sonar.focus(2)" onmouseleave="sonar.focus(null)"><b><i style="background:#5b8def"></i>Ask</b>acoustic ID ping, 10 s to answer</li>
-        <li onmouseenter="sonar.focus(3)" onmouseleave="sonar.focus(null)"><b><i style="background:#e8b23a"></i>Slow</b>draft the advisory, send nothing</li>
-        <li onmouseenter="sonar.focus(4)" onmouseleave="sonar.focus(null)"><b><i style="background:#ef5350"></i>Hold</b>one card to the officer</li>
-        <li onmouseenter="sonar.focus(0)" onmouseleave="sonar.focus(null)"><b><i style="background:#a98bf5"></i>Hand off</b>officer picks, logged under a name</li>
+        <li onmouseenter="sonar.focus(1)" onmouseleave="sonar.focus(null)"><b><i style="background:#9aa3b2"></i>Watch</b>Spotted. Checking bookings.</li>
+        <li onmouseenter="sonar.focus(2)" onmouseleave="sonar.focus(null)"><b><i style="background:#5b8def"></i>Ask</b>Pinged. 10 s to answer.</li>
+        <li onmouseenter="sonar.focus(3)" onmouseleave="sonar.focus(null)"><b><i style="background:#e8b23a"></i>Slow</b>No answer. Watching closer.</li>
+        <li onmouseenter="sonar.focus(4)" onmouseleave="sonar.focus(null)"><b><i style="background:#ef5350"></i>Hold</b>Your call. One card.</li>
+        <li onmouseenter="sonar.focus(0)" onmouseleave="sonar.focus(null)"><b><i style="background:#a98bf5"></i>Hand off</b>You pick. Logged in your name.</li>
       </ol>
-      <p class="hint">Hover a contact to identify it. Click one to ping it.</p>
+      <p class="hint">Hover to identify. Click to ping.</p>
     </div>
     <div class="signin">
       <h2>Sign in</h2>
-      <p class="hint">Harbor authority and registered operators.</p>
+      <p class="hint">For the harbor watch and registered operators.</p>
       <form class="form" id="signin-form" onsubmit="return submitLogin(event)">
         <div><label>Username</label><input name="username" required maxlength="80" autocomplete="username"></div>
         <div><label>Password</label><input name="password" type="password" required maxlength="200" autocomplete="current-password"></div>
@@ -561,7 +563,7 @@ async function submitLogin(ev) {
   const f = ev.target, err = document.getElementById('login-err');
   const r = await fetch('/login', {method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({username: f.username.value, password: f.password.value})});
-  if (!r.ok) { err.textContent = (await r.json()).detail || 'sign-in failed'; return false; }
+  if (!r.ok) { err.textContent = r.status === 401 ? "That didn't match. Try again." : 'Sign-in failed. Try again.'; return false; }
   location.href = '/watch';
   return false;
 }

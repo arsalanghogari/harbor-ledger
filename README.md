@@ -90,6 +90,7 @@ the officer's release, and the tasking is logged as an external action under the
 
 ```bash
 curl -H "Authorization: Bearer $HARBOR_DRONE_TOKEN" https://harbor-ledger.onrender.com/tasks
+curl -H "Authorization: Bearer $HARBOR_DRONE_TOKEN" https://harbor-ledger.onrender.com/tasks/points  # appended text log; reset on redeploy
 ```
 
 Each tasking carries the live target (`lat`, `lon`, harbor-local `x_m`/`y_m`, `depth_m`, `course_deg`

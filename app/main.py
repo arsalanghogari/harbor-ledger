@@ -9,11 +9,12 @@ from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import Cookie, Depends, FastAPI, Header, HTTPException, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .auth import COOKIE, SESSION_S, current_operator, issue, load_users, parse, verify
+from . import engine as engine_mod
 from .engine import ROOT, Engine
 
 engine = Engine()
@@ -195,6 +196,16 @@ async def booking_review(booking_id: int, r: ReviewIn, user: dict = Depends(auth
 async def tasks(all: bool = False, who: dict = Depends(drone_or_authority)):
     """Published taskings for external platforms; each is refreshed from the live track."""
     return engine.tasks_json(include_done=all)
+
+
+@app.get("/tasks/points", response_class=PlainTextResponse)
+async def task_points(who: dict = Depends(drone_or_authority)):
+    """The append-only text log of every published tasking's points (tab-separated)."""
+    try:
+        with open(engine_mod.POINTS) as f:
+            return f.read()
+    except FileNotFoundError:
+        return ""
 
 
 @app.get("/tasks/{task_id}")

@@ -134,10 +134,10 @@
   .leaflet-tooltip.lbl.zone-lbl { color: #ff7a7a; opacity: .7; font-size: 11px; font-weight: 500; }
   .leaflet-tooltip.lbl.zone-lbl.hot { opacity: 1; }
   .legend { position: absolute; left: 10px; bottom: 10px; z-index: 500; display: flex; align-items: center; gap: 14px; padding: 6px 10px; background: oklch(16% 0.018 250 / .85); border: 1px solid var(--line); border-radius: 6px; font: 11px/1 var(--mono); color: var(--ink-2); }
-  .legend i { display: inline-block; width: 9px; height: 9px; margin-right: 6px; vertical-align: -1px; box-sizing: border-box; }
-  .legend .dot { border-radius: 50%; background: #5ec8ff; } .legend .dia { background: #e879f9; transform: rotate(45deg) scale(.85); }
-  .legend .hol { border-radius: 50%; border: 1.5px dashed #9aa8ba; } .legend .zn { border: 1px solid #ff7a7a; background: repeating-linear-gradient(45deg, rgba(255,122,122,.5) 0 1px, transparent 1px 3px); }
-  .legend .gt { border-radius: 50%; border: 1px dashed #ffb547; }
+  :is(.legend, .gl) i { display: inline-block; width: 9px; height: 9px; margin-right: 6px; vertical-align: -1px; box-sizing: border-box; }
+  :is(.legend, .gl) .dot { border-radius: 50%; background: #5ec8ff; } :is(.legend, .gl) .dia { background: #e879f9; transform: rotate(45deg) scale(.85); }
+  :is(.legend, .gl) .hol { border-radius: 50%; border: 1.5px dashed #9aa8ba; } :is(.legend, .gl) .zn { border: 1px solid #ff7a7a; background: repeating-linear-gradient(45deg, rgba(255,122,122,.5) 0 1px, transparent 1px 3px); }
+  :is(.legend, .gl) .gt { border-radius: 50%; border: 1px dashed #ffb547; }
   .legend button { padding: 0 4px; font-size: 11px; border: 0; background: transparent; color: var(--ink-3); }
   .legend.min span { display: none; }
   .leaflet-control-scale-line { background: oklch(16% 0.018 250 / .7); color: var(--ink-3); border-color: var(--line-strong); font: 10px var(--mono); }
@@ -185,12 +185,62 @@
   .band { padding-block: 72px !important; border-top: 1px solid var(--line); }
   .band h2 { font-size: 32px; letter-spacing: -0.02em; margin: 0 0 32px; }
   .ladder { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-  .ladder li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; font-size: 14px; color: var(--ink-2); cursor: default; transition: border-color .2s; }
-  .ladder li:hover { border-color: var(--line-strong); color: var(--ink); }
+  .ladder li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; font-size: 14px; color: var(--ink-2); cursor: pointer; transition: border-color .2s, background-color .2s, opacity .2s, transform .2s var(--ease); }
+  .ladder li:hover { border-color: var(--line-strong); color: var(--ink); transform: translateY(-2px); }
+  .ladder li.on { border-color: var(--c); background: var(--raise); color: var(--ink); }
+  .ladder li.on i { box-shadow: 0 0 0 3px color-mix(in oklch, var(--c) 45%, transparent); }
+  .ladder li.done { opacity: .5; }
+  .ladder li.ok { border-color: #5ec8ff; }
+  .ladder li.ok i { background: #5ec8ff; border-radius: 50%; transform: none; box-shadow: none; }
   .ladder .n { display: block; font: 12px var(--mono); color: var(--ink-3); margin-bottom: 18px; }
   .ladder b { display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 16px; margin-bottom: 4px; }
-  .ladder i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ladder i { flex: none; margin: 0 !important; transition: box-shadow .2s; }
+  .funnel { display: block; margin-top: 16px; font: 11px var(--mono); color: var(--ink-3); }
+  .funnel s { display: block; height: 4px; border-radius: 2px; background: var(--line); margin-bottom: 6px; overflow: hidden; }
+  .funnel s::after { content: ""; display: block; height: 100%; width: max(4px, var(--w)); background: var(--c); transform: scaleX(0); transform-origin: left; transition: transform 1s var(--ease) calc(var(--i) * 120ms); }
+  .seen .funnel s::after { transform: scaleX(1); }
+  .band-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 32px; }
+  .band .band-head h2 { margin: 0; }
+  .band-head .ghost-link { background: transparent; text-align: center; }
+  .log { margin-top: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-height: 176px; font: 13px/1.5 var(--mono); color: var(--ink-2); }
+  .log .ln { display: flex; gap: 14px; padding: 3px 0; animation: rise .3s var(--ease); }
+  .log time { color: var(--ink-3); flex: none; }
+  .log .ln i { margin-right: 10px !important; }
+  .log .ln.hot span { color: #ffb547; }
+  .log .choice { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0 82px; animation: rise .3s var(--ease); }
+  .log .choice button { font-size: 13px; padding: 7px 14px; border-radius: 999px; }
+  .foot { font: 12px var(--mono); color: var(--ink-3); margin: 10px 0 0; }
+  .seg { display: inline-flex; padding: 3px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; }
+  .seg button { border: 0; border-radius: 999px; background: transparent; color: var(--ink-3); padding: 8px 16px; }
+  .seg button[aria-selected="true"] { background: var(--raise); color: var(--ink); }
+  .side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 48px; align-items: center; animation: rise .35s var(--ease); }
+  .side[hidden] { display: none; }
+  .side h3 { font-size: 24px; letter-spacing: -0.02em; margin: 0 0 10px; }
+  .side p { color: var(--ink-2); margin: 0 0 18px; max-width: 44ch; }
+  .ticks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; color: var(--ink-2); font-size: 15px; }
+  .ticks li::before { content: "✓"; color: var(--accent); margin-right: 10px; }
+  .demo { background: var(--panel); border: 1px solid var(--line-strong); border-radius: 16px; padding: 18px; }
+  .demo .card { background: var(--raise); padding: 14px 16px 12px; border-radius: 8px; }
+  .demo .card h2 { font-size: 19px; margin: 0 0 8px; }
+  .demo .tag { color: #ffb547; } .demo .tag::before { background: #ffb547; animation: none; }
+  .mini { display: block; width: 100%; background: var(--bg); border-radius: 6px; margin: 4px 0 10px; }
+  .mini text { font: 12px var(--mono); fill: var(--ink); paint-order: stroke; stroke: var(--bg); stroke-width: 4px; }
+  .mini .l2 { font-size: 10.5px; font-weight: 700; fill: #ffb547; }
+  .mini .zl { font-size: 11px; fill: #ff7a7a; }
+  .msg { background: var(--raise); border: 1px solid var(--line-strong); color: var(--ink); font-size: 14px; padding: 10px 12px; border-radius: 8px; margin-bottom: 10px; animation: rise .3s var(--ease); }
+  .demo-top { display: flex; justify-content: space-between; font: 12px var(--mono); color: var(--ink-3); margin-bottom: 10px; }
+  .demo-top b { color: var(--accent); font-weight: 500; }
+  .grid { position: relative; display: grid; grid-template-columns: repeat(12, 1fr); gap: 2px; touch-action: none; user-select: none; margin-bottom: 14px; }
+  .grid div { aspect-ratio: 1; background: var(--bg); border-radius: 2px; cursor: crosshair; transition: background-color .12s; }
+  .grid .dive { position: absolute; border: 1px dashed rgb(94 200 255 / .28); pointer-events: none; transition: border-color .2s; }
+  .grid.drag .dive { border-color: rgb(94 200 255 / .7); }
+  .grid .veh { position: absolute; width: 14px; height: 14px; margin: -7px; border-radius: 50%; background: #5ec8ff; pointer-events: none; animation: rise .3s var(--ease); }
+  .grid .veh::after { content: "AUV-12"; position: absolute; left: 20px; top: -1px; font: 12px var(--mono); color: var(--ink); white-space: nowrap; text-shadow: 0 0 4px var(--bg), 0 0 4px var(--bg); }
+  .demo label { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-2); margin-bottom: 14px; }
+  .demo input[type="range"] { flex: 1; padding: 0; border: 0; accent-color: var(--accent); }
+  .demo output { font: 12px var(--mono); width: 3ch; }
+  .book { width: 100%; text-align: center; border: 0; border-radius: 999px; background: var(--accent); color: var(--bg); font-weight: 600; margin-bottom: 10px; }
+  .book:hover { background: oklch(88% 0.1 200); }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
   .card h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
   .card p { margin: 0; color: var(--ink-2); }
@@ -241,7 +291,8 @@
   @media (max-width: 900px) {
     .legend span { display: none; }
     .hero { grid-template-columns: 1fr; min-height: 0; }
-    .ladder { grid-template-columns: 1fr 1fr; } .cards { grid-template-columns: 1fr; }
+    .ladder { grid-template-columns: 1fr 1fr; } .side { grid-template-columns: 1fr; gap: 24px; }
+    .log .choice { margin-left: 0; }
     header .site-nav a { display: none; }
     main { flex-direction: column; }
     aside { flex: 0 0 auto; max-width: none; border-left: 0; border-top: 1px solid var(--line); }
@@ -283,22 +334,42 @@
 
   <section id="how" class="band">
     <p class="eyebrow">01 / How it works</p>
-    <h2>Five rungs, climbed only when needed.</h2>
-    <ol class="ladder">
-      <li onmouseenter="sonar.focus(1)" onmouseleave="sonar.focus(null)"><span class="n">01</span><b><i style="background:#9aa3b2"></i>Watch</b>Spotted. Checking bookings.</li>
-      <li onmouseenter="sonar.focus(2)" onmouseleave="sonar.focus(null)"><span class="n">02</span><b><i style="background:#5b8def"></i>Ask</b>Pinged. 10 s to answer.</li>
-      <li onmouseenter="sonar.focus(3)" onmouseleave="sonar.focus(null)"><span class="n">03</span><b><i style="background:#e8b23a"></i>Slow</b>No answer. Watching closer.</li>
-      <li onmouseenter="sonar.focus(4)" onmouseleave="sonar.focus(null)"><span class="n">04</span><b><i style="background:#ef5350"></i>Hold</b>Your call. One card.</li>
-      <li onmouseenter="sonar.focus(0)" onmouseleave="sonar.focus(null)"><span class="n">05</span><b><i style="background:#a98bf5"></i>Hand off</b>You pick. Logged in your name.</li>
+    <div class="band-head">
+      <h2>Five rungs, climbed only when needed.</h2>
+      <button class="ghost-link" onclick="how.play()">▶ Follow one contact</button>
+    </div>
+    <ol class="ladder" id="ladder">
+      <li tabindex="0" style="--c:#ffb547; --w:100%; --i:0" onmouseenter="sonar.focus(1)" onmouseleave="sonar.focus(null)"><span class="n">01</span><b class="gl"><i class="dia"></i>Watch</b>Spotted. Checking bookings.<span class="funnel"><s></s>100 contacts</span></li>
+      <li tabindex="0" style="--c:#ffb547; --w:9%; --i:1" onmouseenter="sonar.focus(2)" onmouseleave="sonar.focus(null)"><span class="n">02</span><b class="gl"><i class="dia"></i>Ask</b>Pinged. 10 s to answer.<span class="funnel"><s></s>9 unbooked</span></li>
+      <li tabindex="0" style="--c:#ffb547; --w:3%; --i:2" onmouseenter="sonar.focus(3)" onmouseleave="sonar.focus(null)"><span class="n">03</span><b class="gl"><i class="dia"></i>Slow</b>No answer. Watching closer.<span class="funnel"><s></s>3 silent</span></li>
+      <li tabindex="0" style="--c:#ffb547; --w:1%; --i:3" onmouseenter="sonar.focus(4)" onmouseleave="sonar.focus(null)"><span class="n">04</span><b class="gl"><i class="dia"></i>Hold</b>Your call. One card.<span class="funnel"><s></s>1 card</span></li>
+      <li tabindex="0" style="--c:#9aa8ba; --w:1%; --i:4" onmouseenter="sonar.focus(0)" onmouseleave="sonar.focus(null)"><span class="n">05</span><b class="gl"><i class="dia"></i>Hand off</b>You pick. Logged in your name.<span class="funnel"><s></s>1 decision</span></li>
     </ol>
+    <div class="log" id="how-log" aria-live="polite"><p class="hint">Press play, or click a rung, to follow T-7 through a night shift.</p></div>
+    <p class="foot">Bars: an example night, 100 contacts.</p>
   </section>
 
   <section id="who-for" class="band">
     <p class="eyebrow">02 / Who it's for</p>
-    <h2>One ledger, two sides.</h2>
-    <div class="cards">
-      <div class="card"><h3>Harbor officers</h3><p>A live map of every contact, booked or not. Only the ones that need you reach the queue.</p></div>
-      <div class="card"><h3>Registered operators</h3><p>Book an area and a time window. Your vehicle stays green and out of the way.</p></div>
+    <div class="band-head">
+      <h2>One ledger, two sides.</h2>
+      <div class="seg" role="tablist"><button role="tab" data-side="officer" aria-selected="true" onclick="who('officer')">Harbor officer</button><button role="tab" data-side="operator" aria-selected="false" onclick="who('operator')">Registered operator</button></div>
+    </div>
+    <div class="side" id="side-officer">
+      <div><h3>A quiet map. One decision.</h3><p>Only contacts that need you get color and words. Everything nominal is a bare marker, and a count in the header.</p>
+        <ul class="ticks"><li>Five exceptions, ranked: keep-out first</li><li>Numbered options, keys 1–4</li><li>Every decision logged in your name</li></ul></div>
+      <div class="demo" id="demo-officer"></div>
+    </div>
+    <div class="side" id="side-operator" hidden>
+      <div><h3>Book once. Stay quiet.</h3><p>Draw your work area and pick a time window. Inside it your vehicle is a plain cyan dot and its name, nothing that needs the officer.</p>
+        <ul class="ticks"><li>Draw the box on the harbor grid</li><li>Amend or close it any time</li><li>Your box shows on the officer's map only if you stray near its edge</li></ul></div>
+      <div class="demo">
+        <div class="demo-top"><span>Drag to draw your work area</span><b id="box"></b></div>
+        <div class="grid" id="grid"></div>
+        <label>Window <input type="range" id="hours" min="1" max="8" value="2" oninput="document.getElementById('win').value = this.value + ' h'"><output id="win">2 h</output></label>
+        <button class="book" onclick="grid.book()">Book it</button>
+        <div id="booked"></div>
+      </div>
     </div>
   </section>
 
@@ -635,7 +706,7 @@ function renderHeader(s) {
   const el = document.getElementById('clock');
   el.className = 'clock';
   const c = s.counts;
-  el.innerHTML = `${c.registered} registered · ${c.unknown} unknown · ${c.nominal} nominal${c.lost ? ` · ${c.lost} lost` : ''}${s.speed !== 1 ? ` · ${s.speed}x` : ''}${s.running || s.t >= s.end ? '' : ' · paused'}`;
+  el.innerHTML = `${c.total} contact${c.total === 1 ? '' : 's'} · ${c.nominal} nominal${c.attention ? ` · <span class="flag">${c.attention} need${c.attention === 1 ? 's' : ''} attention</span>` : ''}${c.lost ? ` · ${c.lost} lost` : ''}${s.speed !== 1 ? ` · ${s.speed}x` : ''}${s.running || s.t >= s.end ? '' : ' · paused'}`;
 }
 
 const expandedBookings = new Set();
@@ -663,8 +734,8 @@ function renderBookingTable(s) {
 function startSonar(canvas) {
   const ctx = canvas.getContext('2d');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const COLORS = {0: '#6fd48a', 1: '#9aa3b2', 2: '#5b8def', 3: '#e8b23a', 4: '#ef5350'};
-  const NAMES = {0: 'Known', 1: 'Watch', 2: 'Ask', 3: 'Slow', 4: 'Hold'};
+  // spec symbology: cyan circle = registered, magenta diamond = unknown, amber = needs attention; only rank 1 (Hold) animates
+  const STATUS = {1: 'watch · no booking', 2: 'ask · pinged', 3: 'slow · no reply', 4: 'hold · your call'};
   const dpr = Math.min(devicePixelRatio || 1, 2);
   let W, H, cx, cy, R, sweep = 0, last = performance.now(), hover = null, focus = null, n = 0, story = 0;
   const contacts = [];
@@ -708,14 +779,24 @@ function startSonar(canvas) {
     ctx.strokeStyle = 'rgba(127, 211, 232, 0.55)';
     ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(sweep) * R, cy + Math.sin(sweep) * R); ctx.stroke();
     for (const c of contacts) {
-      const [x, y] = pos(c), col = COLORS[c.rung], vis = (focus === null || c.rung === focus ? 1 : 0.15) * c.fade;
-      if (c.blip > 0) { ctx.globalAlpha = vis * c.blip * 0.7; ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(x, y, (4 + (1 - c.blip) * 18) * dpr, 0, Math.PI * 2); ctx.stroke(); }
-      if (c.rung >= 3) { ctx.globalAlpha = vis * 0.45; ctx.strokeStyle = col; ctx.setLineDash([3 * dpr, 4 * dpr]); ctx.beginPath(); ctx.arc(x, y, 20 * dpr, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
-      ctx.globalAlpha = vis; ctx.fillStyle = col;
-      ctx.beginPath(); ctx.arc(x, y, (c === hover ? 5.5 : 3.5) * dpr, 0, Math.PI * 2); ctx.fill();
-      if (c === hover || c.rung === 4) {
-        ctx.font = `500 ${12 * dpr}px "IBM Plex Mono", monospace`; ctx.fillStyle = c === hover ? '#e6edf3' : col;
-        ctx.fillText(`${c.id} · ${NAMES[c.rung]}`, x + 10 * dpr, y - 8 * dpr);
+      const [x, y] = pos(c), vis = (focus === null || c.rung === focus ? 1 : 0.15) * c.fade, sz = (c === hover ? 6 : 4.5) * dpr;
+      if (c.rung === 4 && c.blip > 0) { ctx.globalAlpha = vis * c.blip * 0.7; ctx.strokeStyle = C.amber; ctx.beginPath(); ctx.arc(x, y, (6 + (1 - c.blip) * 18) * dpr, 0, Math.PI * 2); ctx.stroke(); }
+      if (c.rung >= 3) { ctx.globalAlpha = vis * 0.6; ctx.strokeStyle = C.amber; ctx.setLineDash([3 * dpr, 4 * dpr]); ctx.beginPath(); ctx.arc(x, y, 20 * dpr, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.globalAlpha = vis; ctx.beginPath();
+      if (c.rung === 0) { ctx.fillStyle = C.cyan; ctx.arc(x, y, sz, 0, Math.PI * 2); }
+      else { ctx.fillStyle = C.magenta; ctx.moveTo(x, y - sz); ctx.lineTo(x + sz, y); ctx.lineTo(x, y + sz); ctx.lineTo(x - sz, y); ctx.closePath(); }
+      ctx.fill();
+      if (c === hover || c.rung === 4) {  // plain mono label, dark outline, status line only for exceptions
+        ctx.lineWidth = 4 * dpr; ctx.strokeStyle = '#0b0f14'; ctx.lineJoin = 'round';
+        const flip = x + 150 * dpr > W, lx = x + (flip ? -10 : 10) * dpr;  // flip left at the edge
+        ctx.textAlign = flip ? 'right' : 'left';
+        ctx.font = `${12 * dpr}px "IBM Plex Mono", monospace`; ctx.fillStyle = C.ink;
+        ctx.strokeText(c.id, lx, y - 2 * dpr); ctx.fillText(c.id, lx, y - 2 * dpr);
+        if (c.rung) {
+          ctx.font = `${c.rung === 4 ? 700 : 400} ${10.5 * dpr}px "IBM Plex Mono", monospace`; ctx.fillStyle = C.amber;
+          ctx.strokeText(STATUS[c.rung], lx, y + 11 * dpr); ctx.fillText(STATUS[c.rung], lx, y + 11 * dpr);
+        }
+        ctx.lineWidth = dpr; ctx.textAlign = 'left';
       }
       ctx.globalAlpha = 1;
     }
@@ -731,6 +812,80 @@ function startSonar(canvas) {
   return {focus: r => { focus = r; }};
 }
 let sonar = {focus() {}};
+
+// "How it works" replays one contact up the ladder, with a branch at Ask.
+const STORY = [
+  [1, 0, 'T-7 spotted 140 m off the north pier, 2.1 m/s, 12 m deep. No booking covers it.'],
+  [2, 15, 'Acoustic ping: identify yourself. 10 s to answer.'],
+  [3, 25, 'No reply. Two more pings. Patrol notice drafted, not sent.'],
+  [4, 41, 'Track heads for the fuel pier keep-out zone. Zone lights up, T-7 jumps to rank 1, one card on the officer\'s screen.'],
+  [5, 58, 'Officer picks "Notify Coast Guard". Sent, logged in their name.'],
+];
+const ANSWER = [0, 21, 'Reply: AUV-12, Bayline Survey. Booking found. Now a cyan dot and a name; the map goes quiet.'];
+const how = (() => {
+  const ladder = document.getElementById('ladder'), log = document.getElementById('how-log');
+  let timer = null;
+  const line = ([r, dt, text]) => `<div class="ln${r === 4 ? ' hot' : ''}"><time>${new Date((50525 + dt) * 1000).toISOString().slice(11, 19)}</time><span class="gl"><i class="${r ? 'dia' : 'dot'}"></i>${text}</span></div>`;
+  const mark = (k, ok) => [...ladder.children].forEach((li, i) => li.className = i === k ? (ok ? 'ok' : 'on') : i < k ? 'done' : '');
+  const stop = () => { clearTimeout(timer); log.querySelector('.choice')?.remove(); };
+  function step(k) {
+    stop(); log.insertAdjacentHTML('beforeend', line(STORY[k])); mark(k);
+    if (k === 1) log.insertAdjacentHTML('beforeend', '<div class="choice"><button onclick="how.answer()">It answers</button><button onclick="how.step(2)">It stays silent</button></div>');
+    else if (k < STORY.length - 1) timer = setTimeout(() => step(k + 1), 1600);
+  }
+  function go(k) { stop(); log.innerHTML = STORY.slice(0, k + 1).map(line).join(''); mark(k); }
+  ladder.addEventListener('click', e => { const li = e.target.closest('li'); if (li) go([...ladder.children].indexOf(li)); });
+  ladder.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.closest('li')?.click(); } });
+  new IntersectionObserver(([e], o) => { if (e.isIntersecting) { ladder.classList.add('seen'); o.disconnect(); } }, {threshold: 0.4}).observe(ladder);
+  return {step, play() { stop(); log.innerHTML = ''; step(0); }, answer() { stop(); log.insertAdjacentHTML('beforeend', line(ANSWER)); mark(1, true); }};
+})();
+
+// "Who it's for": a tab per side, each with a small working demo.
+function who(side) {
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-selected', b.dataset.side === side));
+  document.querySelectorAll('.side').forEach(s => s.hidden = s.id !== `side-${side}`);
+}
+const DEMO_OPTS = ['Keep watching and re-ping', 'Task observation drone', 'Send patrol boat to observe', 'Notify Coast Guard, keep channel open'];
+function officerDemo(pick) {
+  document.getElementById('demo-officer').innerHTML = `<div class="card"><div class="tag">Hold · entering keep-out · 12 s waiting</div>
+    <h2>Unbooked vehicle near the fuel pier</h2>
+    <svg class="mini" viewBox="0 0 400 120" role="img" aria-label="T-7, an unknown contact, entering the fuel pier keep-out zone">
+      <pattern id="mini-hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#ff7a7a" stroke-width="1.2" stroke-opacity=".6"/></pattern>
+      <rect x="244" y="16" width="140" height="88" fill="url(#mini-hatch)" stroke="#ff7a7a"/><text x="252" y="32" class="zl">Fuel pier · 200 m</text><text x="252" y="46" class="zl">standoff 40 m</text>
+      <circle cx="44" cy="40" r="7" fill="#5ec8ff"/><text x="58" y="44">usc-glider-07</text>
+      <rect x="185" y="70" width="11" height="11" fill="#e879f9" transform="rotate(45 190.5 75.5)"/><text x="204" y="72">T-7</text><text x="204" y="86" class="l2">entering keep-out</text>
+    </svg>
+    <div class="meta"><span>2.1 m/s</span><span>12 m deep</span><span>89% unauthorized</span></div>` +
+    (pick == null ? `<div class="buttons">${DEMO_OPTS.map((o, i) => `<button class="opt" onclick="officerDemo(${i})"><span class="n">${i + 1}</span>${o}</button>`).join('')}</div>`
+      : `<div class="msg">Logged: "${DEMO_OPTS[pick]}", in your name, 14:03:27.</div><button onclick="officerDemo()">Try another</button>`) + '</div>';
+}
+officerDemo();
+const grid = (() => {
+  const el = document.getElementById('grid'), W = 12, H = 6, M = 20;  // M metres per cell
+  let a = [3, 1], b = [6, 3], drag = false;
+  el.innerHTML = '<div></div>'.repeat(W * H);
+  const cells = [...el.children], box = document.createElement('i');
+  box.className = 'dive'; el.append(box);
+  const rect = () => [Math.min(a[0], b[0]), Math.max(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[1], b[1])];
+  const at = t => { const i = cells.indexOf(t); return i < 0 ? null : [i % W, Math.floor(i / W)]; };
+  function paint() {
+    const [x0, x1, y0, y1] = rect();
+    Object.assign(box.style, {left: `${x0 / W * 100}%`, top: `${y0 / H * 100}%`, width: `${(x1 - x0 + 1) / W * 100}%`, height: `${(y1 - y0 + 1) / H * 100}%`});
+    el.querySelector('.veh')?.remove();
+    document.getElementById('box').textContent = `${(x1 - x0 + 1) * M} × ${(y1 - y0 + 1) * M} m`;
+    document.getElementById('booked').innerHTML = '';
+  }
+  el.addEventListener('pointerdown', e => { const p = at(e.target); if (p) { a = b = p; drag = true; el.classList.add('drag'); paint(); } });
+  el.addEventListener('pointermove', e => { const p = drag && at(document.elementFromPoint(e.clientX, e.clientY)); if (p) { b = p; paint(); } });
+  addEventListener('pointerup', () => { drag = false; el.classList.remove('drag'); });
+  paint();
+  return {book() {
+    const [x0, x1, y0, y1] = rect(), h = +document.getElementById('hours').value;
+    el.querySelector('.veh')?.remove();
+    el.insertAdjacentHTML('beforeend', `<i class="veh" style="left:${(x0 + x1 + 1) / 2 / W * 100}%; top:${(y0 + y1 + 1) / 2 / H * 100}%"></i>`);
+    document.getElementById('booked').innerHTML = `<div class="msg">Booked ${document.getElementById('box').textContent}, 14:00–${14 + h}:00. On the officer's map: a cyan dot, AUV-12, nothing else.</div>`;
+  }};
+})();
 
 let me = null;
 async function whoami() {

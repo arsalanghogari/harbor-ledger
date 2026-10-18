@@ -25,7 +25,7 @@ def test_harbor_night_arc():
     assert E.card["eta"][0] == "Fuel pier" and E.card["eta"][1] < 120 and "fuel pier" in E.card["headline"]
     assert eng.exception(E)[0] == "keepout_incursion" and [c["vehicle_id"] for c in eng.candidates(E)] == ["sio-auv-3"]
     assert snap["counters"] == {"auto": 3, "total": 4, "external_without_human": 0, "external_total": 1}
-    assert snap["counts"] == {"registered": 2, "unknown": 1, "nominal": 1, "lost": 1}
+    assert snap["counts"] == {"total": 4, "nominal": 1, "attention": 2, "lost": 1}
     assert snap["lost"][0]["exception"] == "registered_lost" and snap["lost"][0]["vehicle_id"] == "sio-auv-3"
     assert eng.tasks_json() == []  # the patrol option publishes no drone tasking
     kinds = [e.kind for e in eng.ledger.events]

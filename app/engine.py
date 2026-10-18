@@ -244,6 +244,13 @@ class Engine:
                 "external_without_human": sum(1 for a in self.ladder.external if not a["officer"]),
                 "external_total": len(self.ladder.external)}
 
+    def counts(self):
+        """Header buckets that add up: every tracked contact is nominal, needs attention, or is lost."""
+        live = self.tracker.confirmed()
+        lost = sum(1 for tr in self.tracker.tracks.values() if tr.cone)
+        nominal = sum(1 for tr in live if self.exception(tr)[0] is None)
+        return {"total": len(live) + lost, "nominal": nominal, "attention": len(live) - nominal, "lost": lost}
+
     def snapshot(self):
         live = self.tracker.confirmed()
         return {"t": self.t, "running": self.running, "speed": self.speed, "end": self.feed.end + TAIL_S,
@@ -252,8 +259,7 @@ class Engine:
                 "queue": [self.ladder.card(tr) for tr in sorted(live, key=lambda tr: -tr.rung_since) if tr.rung == 4],
                 "events": [asdict(e) for e in self.ledger.recent(20)],
                 "counters": self.counters(),
-                "counts": {"registered": sum(1 for tr in live if tr.matched_booking_id), "unknown": sum(1 for tr in live if not tr.matched_booking_id),
-                           "nominal": sum(1 for tr in live if self.exception(tr)[0] is None), "lost": sum(1 for tr in self.tracker.tracks.values() if tr.cone)},
+                "counts": self.counts(),
                 "bookings": [self.booking_json(b) for b in self.reg.all()],
                 "options": OPTIONS, "hidden_option": HIDDEN_OPTION}
 

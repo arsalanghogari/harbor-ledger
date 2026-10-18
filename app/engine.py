@@ -181,7 +181,7 @@ class Engine:
 if __name__ == "__main__":
     eng = Engine()
     out = os.path.join(ROOT, "scenarios", "harbor_night.events.json")
-    snap = eng.run(officer=lambda card: OPTIONS[1], dump=out)
+    snap = eng.run(officer=lambda card: OPTIONS[2], dump=out)
     for e in eng.ledger.events:
         print(f"t={e.t:>4.0f}  {e.track_id:<5} {e.kind:<16} {e.detail}")
     c = snap["counters"]

@@ -13,7 +13,7 @@ Stack: Python 3.13, FastAPI + uvicorn, numpy, scipy, pytest; Leaflet from CDN, v
 | 4 | scoring.py | Unmatched + silent + heading > 0.8 | Done (0.89) |
 | 5 | registry.py | Overlap check rejects a conflicting booking | Done, plus keep-out zone no-go for rung 3+ contacts |
 | 6 | ladder.py | E reaches rung 4, B reconciles to rung 1, D never passes rung 3 | Done |
-| 7 | feed.py + scenario | Replay yields the right row counts per contact | Done: A 241, B 231, C 121, D 61, E 151 |
+| 7 | feed.py + scenario | Replay yields the right row counts per contact | Done: A 241, B 231, E 151 (C and D cut later to declutter the map) |
 | 8 | main.py | Snapshot JSON visible in browser | Done |
 | 9 | index.html | Full demo scenario runs end to end | Done |
 
@@ -66,6 +66,10 @@ Stack: Python 3.13, FastAPI + uvicorn, numpy, scipy, pytest; Leaflet from CDN, v
     harbor-local origin, compass course, speed, depth, 30/60/120 s predictions, asset ETA) that the drone
     polls with a bearer token and reports back to. Only that contact's data leaves, and only under the
     officer's name.
+
+16. **Scenario trimmed to three contacts and two assets** (the research dock, the late research AUV
+    and the debris were cut) so the map reads at a glance. The window-extension and lost-track paths
+    still exist and are unit tested; they are no longer shown in the demo arc.
 
 ## What was not built
 

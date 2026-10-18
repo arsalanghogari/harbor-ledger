@@ -59,17 +59,15 @@ authorized area is itself a signal.
 
 ## Harbor Night
 
-Five contacts over four minutes. Four resolve with no human touch, one reaches the officer.
+Three contacts over four minutes. Two resolve with no human touch, one reaches the officer.
 
 | Contact | Truth | What happens |
 |---|---|---|
 | A | USC glider, registered, inside box | Registry match at t+2 s, tagged known |
 | B | Inspection ROV, 80 m outside its box | Rung 2 at t+15, answers the ping, identified and back to rung 1, flagged out of area; box unchanged |
-| C | Research AUV, window ended 20 min ago, then silent | Window extended, back to rung 1; lost at t+140 with a drift cone and a "send recovery here" line |
-| D | Debris drifting with the current | Rung 3, posterior plateaus at 0.64, lost after 20 s silent, drift cone kept |
-| E | Unknown AUV, 1.5 m/s toward the fuel pier, one 30 degree turn | Rung 1 to 4, card: "Unknown vehicle, 115 s from fuel pier, no reply to ID ping." One click |
+| E | Unknown AUV, 1.5 m/s toward the fuel pier, one 30 degree turn | Rung 1 to 4, card: "Unknown vehicle, 105 s from fuel pier, no reply to ID ping." One click |
 
-Counters end at **Resolved without a human: 4 of 5** and **External actions without a human: 0**.
+Counters end at **Resolved without a human: 2 of 3** and **External actions without a human: 0**.
 Then on `/register`, a dive booked over E's keep-out circle gets an instant no-go naming the contact.
 
 ## Drone tasking

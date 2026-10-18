@@ -66,6 +66,7 @@ class DecisionIn(BaseModel):
 class LoginIn(BaseModel):
     username: str = Field(min_length=1, max_length=80)
     password: str = Field(min_length=1, max_length=200)
+    role: Literal["authority", "operator"]  # which door: officer and operator sign-ins are separate
 
 
 class BookingIn(BaseModel):
@@ -79,6 +80,10 @@ class BookingIn(BaseModel):
     window_end: float = Seconds
 
 
+class ReviewIn(BaseModel):
+    action: Literal["approve", "reject"]
+
+
 class MatchIn(BaseModel):
     booking_id: int
     action: Literal["confirm", "reject"]
@@ -87,6 +92,12 @@ class MatchIn(BaseModel):
 def authority(user: dict = Depends(current_operator)):
     if user["role"] != "authority":
         raise HTTPException(403, "harbor authority only")
+    return user
+
+
+def operator(user: dict = Depends(current_operator)):
+    if user["role"] != "operator":
+        raise HTTPException(403, "registered operators only")
     return user
 
 
@@ -103,11 +114,11 @@ class ControlIn(BaseModel):
 
 @app.get("/snapshot")
 async def snapshot(user: dict = Depends(current_operator)):
-    return engine.snapshot()
+    return engine.snapshot() if user["role"] == "authority" else engine.operator_snapshot(user["operator"])
 
 
 @app.get("/track/{track_id}/events")
-async def track_events(track_id: str, user: dict = Depends(current_operator)):
+async def track_events(track_id: str, user: dict = Depends(authority)):
     """That track's own audit trail, oldest first."""
     return [asdict(e) for e in engine.ledger.events if e.track_id == track_id[:20]]
 
@@ -132,7 +143,7 @@ async def track_action(track_id: str, action: Literal["escalate", "ack", "contac
 
 
 @app.post("/decision")
-async def decision(d: DecisionIn, user: dict = Depends(current_operator)):
+async def decision(d: DecisionIn, user: dict = Depends(authority)):
     try:
         engine.decide(d.track_id, d.option, user["operator"], d.note)
     except ValueError as e:
@@ -145,6 +156,9 @@ async def login(body: LoginIn, response: Response):
     user = verify(body.username, body.password)
     if not user:
         raise HTTPException(401, "wrong username or password")
+    if user["role"] != body.role:
+        raise HTTPException(403, "this is a harbor officer account; use officer sign-in" if user["role"] == "authority"
+                            else "this is an operator account; use operator sign-in")
     response.set_cookie(COOKIE, issue(body.username), max_age=SESSION_S, httponly=True, samesite="lax")
     engine.ledger.log(engine.t, None, "login", f"{user['operator']} signed in as {body.username}")
     return user
@@ -162,9 +176,19 @@ async def me(user: dict = Depends(current_operator)):
 
 
 @app.post("/booking")
-async def booking(b: BookingIn, user: dict = Depends(current_operator)):
+async def booking(b: BookingIn, user: dict = Depends(operator)):
+    """An operator requests a slot for itself; it stays pending until an officer reviews it."""
     made, why = engine.book(operator=user["operator"], **b.model_dump())
     return {"ok": made is not None, "conflict": why, "booking": engine.booking_json(made) if made else None}
+
+
+@app.post("/booking/{booking_id}/review")
+async def booking_review(booking_id: int, r: ReviewIn, user: dict = Depends(authority)):
+    try:
+        b = engine.review(booking_id, r.action == "approve", user["operator"])
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+    return engine.booking_json(b)
 
 
 @app.get("/tasks")
@@ -191,7 +215,7 @@ async def task_report(task_id: str, r: ReportIn, who: dict = Depends(drone_or_au
 
 
 @app.post("/control")
-async def control(c: ControlIn, user: dict = Depends(current_operator)):
+async def control(c: ControlIn, user: dict = Depends(authority)):
     engine.control(c.action, c.speed)
     return {"t": engine.t, "running": engine.running, "speed": engine.speed}
 

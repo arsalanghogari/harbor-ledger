@@ -3,6 +3,8 @@ Every change the system makes writes an Event. Booked areas are never amended by
 from .models import Booking
 
 EXTEND_MIN = 30     # one-time window extension for late vehicles
+FREE = ("closed", "rejected")         # these no longer hold their slot
+UNAPPROVED = FREE + ("pending",)      # these never make a vehicle known
 
 
 def boxes_overlap(a: Booking, b: Booking):
@@ -37,7 +39,7 @@ class Registry:
         """Name of the first conflicting booking or live keep-out zone, else None.
         keepouts: iterable of (x, y, radius, track_id) for tracks at rung 3+."""
         for o in self.ledger.bookings:
-            if o.id != b.id and o.status != "closed" and boxes_overlap(b, o) and windows_overlap(b, o):
+            if o.id != b.id and o.status not in FREE and boxes_overlap(b, o) and windows_overlap(b, o):
                 return f"booking BK-{o.id} ({o.operator}, {o.vehicle_id})"
         for x, y, r, tid in keepouts:
             if b.covers(t) and box_hits_circle(b, x, y, r):
@@ -51,13 +53,25 @@ class Registry:
         why = self.conflict(b, t, keepouts)
         if why:
             return None, why
-        return self.add(b), None
+        b.status = "pending"  # holds the slot, but the vehicle is not known until an officer approves
+        self.add(b)
+        self.ledger.log(t, None, "booking_requested", f"BK-{b.id} {b.vehicle_id} ({b.operator}) awaiting officer review")
+        return b, None
+
+    def review(self, bid, approve, officer, t):
+        """Officer approves (vehicle becomes known in its box and window) or rejects (slot freed)."""
+        b = self.get(bid)
+        if b is None or b.status != "pending":
+            raise ValueError(f"BK-{bid} is not awaiting review")
+        b.status, b.reviewed_by = ("scheduled" if approve else "rejected"), officer
+        self.ledger.log(t, None, f"booking_{'approved' if approve else 'rejected'}", f"BK-{b.id} {b.vehicle_id} ({b.operator}) by {officer}")
+        return b
 
     def find_match(self, x, y, t):
-        return next((b for b in self.ledger.bookings if b.status != "closed" and b.contains(x, y) and b.covers(t)), None)
+        return next((b for b in self.ledger.bookings if b.status not in UNAPPROVED and b.contains(x, y) and b.covers(t)), None)
 
     def find_by_ping(self, ping_id):
-        return next((b for b in self.ledger.bookings if b.ping_id == ping_id and b.status != "closed"), None)
+        return next((b for b in self.ledger.bookings if b.ping_id == ping_id and b.status not in UNAPPROVED), None)
 
     @staticmethod
     def distance_outside(b: Booking, x, y) -> float:

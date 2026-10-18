@@ -25,7 +25,9 @@ def test_harbor_night_arc():
     assert E.card["eta"][0] == "Fuel pier" and E.card["eta"][1] < 120 and "fuel pier" in E.card["headline"]
     assert eng.exception(E)[0] == "keepout_incursion" and [c["vehicle_id"] for c in eng.candidates(E)] == ["sio-auv-3"]
     assert snap["counters"] == {"auto": 3, "total": 4, "external_without_human": 0, "external_total": 1}
-    assert snap["counts"] == {"total": 4, "nominal": 1, "attention": 2, "lost": 1}
+    # only B's out-of-area flag is left for the officer; E was already decided, so it no longer counts
+    assert snap["counts"] == {"total": 4, "attention": 1, "lost": 1}
+    assert not eng.needs_officer(E, "keepout_incursion") and eng.needs_officer(B, "out_of_area")
     assert snap["lost"][0]["exception"] == "registered_lost" and snap["lost"][0]["vehicle_id"] == "sio-auv-3"
     assert eng.tasks_json() == []  # the patrol option publishes no drone tasking
     kinds = [e.kind for e in eng.ledger.events]
@@ -52,7 +54,14 @@ def test_reject_escalate_and_ack():
     with pytest.raises(ValueError):
         eng.contact_operator(E.id, "duty officer")  # unknowns have no operator
     eng.contact_operator(B.id, "duty officer")
-    assert "duty officer" in eng.reg.get(2).note
+    assert "pin-rov-2" in eng.reg.get(2).contact_request and B.contacted is not None
+    assert not eng.needs_officer(B, "out_of_area")
+    with pytest.raises(ValueError):
+        eng.contact_operator(B.id, "duty officer")  # not again while waiting on the operator
+    B.acked = False  # contact on its own, without the earlier acknowledgement
+    eng.t = B.contacted + 120  # still outside two minutes later: back to the officer, who can ask again
+    assert eng.needs_officer(B, "out_of_area") == B.out_of_area
+    eng.contact_operator(B.id, "duty officer")
     eng2 = Engine(); eng2.running = True
     while eng2.t < 130:
         eng2.tick()

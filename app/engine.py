@@ -9,7 +9,7 @@ import math
 import numpy as np
 
 from .imm import MODELS
-from .ladder import HIDDEN_OPTION, OPTIONS, Ladder, bearing
+from .ladder import CONTACT_FOLLOWUP_S, HIDDEN_OPTION, OPTIONS, Ladder, bearing
 from .scoring import dist_to_polygon
 from .models import Booking, Ledger
 from .registry import Registry
@@ -86,6 +86,9 @@ class Engine:
     def book(self, **fields):
         return self.reg.create(Booking(id=None, **fields), self.t, self.keepouts())
 
+    def review(self, booking_id, approve, officer):
+        return self.reg.review(booking_id, approve, officer, self.t)
+
     def decide(self, track_id, option, officer, note=""):
         tr = self.tracker.tracks.get(track_id)
         if tr is None or tr.ended_at is not None:
@@ -150,6 +153,17 @@ class Engine:
             return "keepout_incursion", RANK["keepout_incursion"]
         return "triage", RANK["triage"]
 
+    def needs_officer(self, tr, name, candidates=()):
+        """True only when the officer has something to do now: a decision card, a possible match to
+        confirm or reject, an unknown in a keep-out zone, or a registered vehicle's flag to acknowledge.
+        An unknown the system is still pinging on its own does not count."""
+        waiting_on_operator = tr.contacted is not None and self.t - tr.contacted < CONTACT_FOLLOWUP_S
+        if tr.rung >= 5 or tr.acked or waiting_on_operator or name is None:
+            return False
+        if tr.rung == 4 or tr.matched_booking_id or name == "keepout_incursion":
+            return True
+        return bool(candidates)
+
     # --- drone tasking: published after an officer releases it ---------------------------
     def latlon(self, x, y):
         o = self.assets_cfg["origin"]
@@ -197,7 +211,7 @@ class Engine:
              "heading_deg": round(bearing(tr.vx, tr.vy)), "depth": tr.depth, "rung": tr.rung,
              "posterior": tr.posterior, "features": tr.features, "mode": tr.filter.mode, "modes": tr.filter.modes,
              "booking_id": tr.matched_booking_id, "resolution": tr.resolution, "decision": tr.decision,
-             "out_of_area": tr.out_of_area, "acked": tr.acked, "human": tr.human,
+             "out_of_area": tr.out_of_area, "acked": tr.acked, "contacted": tr.contacted, "human": tr.human,
              "exception": name, "rank": rank, "zone": self.inside_zone(tr.x, tr.y),
              "time_in_state": self.t - (tr.out_of_area_since if name == "out_of_area" and tr.out_of_area_since is not None else tr.rung_since),
              "uncertainty_m": round(float(np.sqrt(np.linalg.eigvalsh(tr.filter.P[:2, :2]).max())), 1),
@@ -214,6 +228,7 @@ class Engine:
                       "show_box": tr.box_shown})
         else:
             d["candidates"] = self.candidates(tr)
+        d["needs_officer"] = self.needs_officer(tr, name, d.get("candidates", ()))
         return d
 
     def lost_json(self, tr):
@@ -229,7 +244,7 @@ class Engine:
 
     def booking_json(self, b):
         d = asdict(b)
-        d["display_status"] = ("closed" if self.t > b.window_end else "scheduled" if self.t < b.window_start
+        d["display_status"] = (b.status if b.status in ("pending", "rejected") else "closed" if self.t > b.window_end else "scheduled" if self.t < b.window_start
                                else "amended" if b.status == "amended" else "active")
         lost = next((tr for tr in self.tracker.tracks.values() if tr.matched_booking_id == b.id and tr.cone), None)
         d["recovery"] = lost.recovery if lost else None
@@ -245,11 +260,11 @@ class Engine:
                 "external_total": len(self.ladder.external)}
 
     def counts(self):
-        """Header buckets that add up: every tracked contact is nominal, needs attention, or is lost."""
+        """Header: every tracked contact, how many the officer can act on now, how many are lost."""
         live = self.tracker.confirmed()
         lost = sum(1 for tr in self.tracker.tracks.values() if tr.cone)
-        nominal = sum(1 for tr in live if self.exception(tr)[0] is None)
-        return {"total": len(live) + lost, "nominal": nominal, "attention": len(live) - nominal, "lost": lost}
+        attention = sum(1 for tr in live if self.needs_officer(tr, self.exception(tr)[0], () if tr.matched_booking_id else self.candidates(tr)))
+        return {"total": len(live) + lost, "attention": attention, "lost": lost}
 
     def snapshot(self):
         live = self.tracker.confirmed()
@@ -262,6 +277,11 @@ class Engine:
                 "counts": self.counts(),
                 "bookings": [self.booking_json(b) for b in self.reg.all()],
                 "options": OPTIONS, "hidden_option": HIDDEN_OPTION}
+
+    def operator_snapshot(self, operator):
+        """What a registered operator may see: the clock and its own bookings. No contacts, no other operators."""
+        return {"t": self.t, "running": self.running, "speed": self.speed, "end": self.feed.end + TAIL_S,
+                "bookings": [self.booking_json(b) for b in self.reg.all() if b.operator == operator]}
 
     def run(self, officer=None, dump=None):
         """Headless: run to the end. officer(card) -> option is called once per Hold card."""

@@ -16,9 +16,11 @@ class Booking:
     y_max: float
     window_start: float  # scenario seconds
     window_end: float
-    status: str = "scheduled"  # scheduled, active, amended (window extended), closed
+    status: str = "scheduled"  # pending (awaiting officer review), rejected, scheduled, active, amended (window extended), closed
     extended: int = 0          # window extensions used (max 1)
     note: str = ""             # reason when amended by the system
+    reviewed_by: str = ""      # officer who approved or rejected an operator's request
+    contact_request: str = ""  # shown to the operator in its portal when the harbor watch asks it to get in touch
 
     def contains(self, x, y):
         return self.x_min <= x <= self.x_max and self.y_min <= y <= self.y_max
@@ -74,6 +76,7 @@ class Track:
     box_shown: bool = False                         # dive box drawn (hysteresis around the edge margin)
     rejected: list = field(default_factory=list)    # booking ids the officer rejected as a match
     acked: bool = False                             # officer acknowledged the exception
+    contacted: float | None = None                  # when the officer asked the operator to get in touch
     human: bool = False                             # identity or outcome settled by a human
 
     @property

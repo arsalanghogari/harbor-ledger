@@ -47,8 +47,6 @@
   .clock { font: 13px/1 var(--mono); color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
   .clock .live { color: var(--ok); }
   .clock.off { color: var(--bad); }
-  .who { font-size: 13px; color: var(--ink-2); white-space: nowrap; }
-  .who a { color: var(--ink-3); }
 
   main { flex: 1; display: flex; min-height: 0; }
   .hide { display: none !important; }
@@ -80,6 +78,9 @@
   /* queue */
   .empty { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 6px; color: var(--ink-3); }
   .empty .big { font-size: 22px; font-weight: 600; color: var(--ink-2); }
+  #look { flex: none; display: grid; gap: 6px; margin-top: 16px; }
+  #look:empty { display: none; }
+  #look button { display: flex; justify-content: space-between; gap: 12px; font: 13px var(--mono); }
   .card { background: var(--raise); border: 1px solid var(--line-strong); border-radius: 8px; padding: 14px 16px 12px; animation: rise .4s var(--ease); }
   .tag { display: flex; align-items: center; gap: 7px; font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--bad); margin-bottom: 10px; }
   .tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); animation: pulse 1.8s ease-out infinite; }
@@ -114,7 +115,7 @@
 
   /* map symbology: shape says who, fill and stroke say status; nominal earns no color */
   aside { display: flex; flex-direction: column; }
-  #queue { flex: 1; min-height: 0; }
+  #queue { flex: 1 0 auto; }  /* grows to fit its card; the aside scrolls instead of the card spilling over the list */
   .leaflet-div-icon { background: none; border: 0; }
   .mk { position: relative; width: 0; height: 0; }
   .mk .g { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; border-radius: 50%; background: var(--c); box-sizing: border-box; }
@@ -144,7 +145,8 @@
   /* detail card */
   .detail-card { margin-bottom: 14px; }
   .detail-card .tag { text-transform: none; letter-spacing: 0; font-size: 12px; }
-  .detail-card .tag::before { animation: none; box-shadow: none; }
+  .detail-card .tag::before { animation: none; box-shadow: none; background: currentColor; }
+  .detail-card.still { animation: none; }
   .kv { width: 100%; border-collapse: collapse; font-size: 13px; margin: 4px 0 12px; }
   .kv td { padding: 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
   .kv td:first-child { color: var(--ink-3); width: 38%; padding-right: 10px; }
@@ -234,8 +236,6 @@
   .grid div { aspect-ratio: 1; background: var(--bg); border-radius: 2px; cursor: crosshair; transition: background-color .12s; }
   .grid .dive { position: absolute; border: 1px dashed rgb(94 200 255 / .28); pointer-events: none; transition: border-color .2s; }
   .grid.drag .dive { border-color: rgb(94 200 255 / .7); }
-  .grid .veh { position: absolute; width: 14px; height: 14px; margin: -7px; border-radius: 50%; background: #5ec8ff; pointer-events: none; animation: rise .3s var(--ease); }
-  .grid .veh::after { content: "AUV-12"; position: absolute; left: 20px; top: -1px; font: 12px var(--mono); color: var(--ink); white-space: nowrap; text-shadow: 0 0 4px var(--bg), 0 0 4px var(--bg); }
   .demo label { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-2); margin-bottom: 14px; }
   .demo input[type="range"] { flex: 1; padding: 0; border: 0; accent-color: var(--accent); }
   .demo output { font: 12px var(--mono); width: 3ch; }
@@ -248,6 +248,8 @@
   #signin { width: min(380px, calc(100vw - 32px)); background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 14px; padding: 24px; }
   #signin::backdrop { background: oklch(10% 0.02 250 / .7); backdrop-filter: blur(3px); }
   #signin .form { grid-template-columns: 1fr; }
+  #signin .seg { display: flex; margin: 8px 0 10px; } #signin .seg button { flex: 1; text-align: center; }
+  #signin .seg button[aria-selected="true"] { box-shadow: inset 0 0 0 1px var(--line-strong); }
   #signin .x { position: absolute; top: 12px; right: 12px; }
   #signin .x button { border: 0; background: transparent; color: var(--ink-3); padding: 4px 8px; }
   header .site-nav { margin-left: auto; display: flex; gap: 6px; align-items: center; }
@@ -269,7 +271,7 @@
   th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
   th { color: var(--ink-3); font-weight: 500; font-size: 12px; }
   td .sub { color: var(--ink-3); font: 12px var(--mono); }
-  .st-amended, .st-flag { color: var(--warn); } .st-active { color: var(--ok); } .st-closed, .st-scheduled { color: var(--ink-3); } .st-lost { color: var(--violet); }
+  .st-amended, .st-flag, .st-pending { color: var(--warn); } .st-rejected { color: var(--ink-3); } .st-active { color: var(--ok); } .st-closed, .st-scheduled { color: var(--ink-3); } .st-lost { color: var(--violet); }
   button.more { font-size: 12px; padding: 3px 9px; margin-top: 5px; background: transparent; color: var(--ink-3); border: 1px solid var(--line); }
   button.more:hover { color: var(--ink); border-color: var(--line-strong); }
   tr.details td { background: var(--bg); color: var(--ink-2); font-size: 12px; line-height: 1.5; padding: 8px 10px 10px; }
@@ -309,7 +311,7 @@
   <nav class="site-nav hide" id="site-nav"><a href="#how">How it works</a><a href="#who-for">Who it's for</a><button onclick="signin.showModal()">Sign in</button></nav>
   <div class="right">
     <nav class="tabs"><a href="/watch" id="nav-watch">Officer console</a><a href="/register" id="nav-register">Operator portal</a><a href="#" class="signout" onclick="logout(); return false">Sign out</a></nav>
-    <div class="meta"><span class="who" id="who"></span><span class="clock" id="clock">connecting</span></div>
+    <div class="meta"><span class="clock" id="clock">connecting</span></div>
   </div>
 </header>
 
@@ -356,19 +358,18 @@
       <div class="seg" role="tablist"><button role="tab" data-side="officer" aria-selected="true" onclick="who('officer')">Harbor officer</button><button role="tab" data-side="operator" aria-selected="false" onclick="who('operator')">Registered operator</button></div>
     </div>
     <div class="side" id="side-officer">
-      <div><h3>A quiet map. One decision.</h3><p>Only contacts that need you get color and words. Everything nominal is a bare marker, and a count in the header.</p>
-        <ul class="ticks"><li>Five exceptions, ranked: keep-out first</li><li>Numbered options, keys 1–4</li><li>Every decision logged in your name</li></ul></div>
+      <div><h3>A quiet map. One decision.</h3><p>Only contacts that need you get color and words. Everything that is fine is a bare marker, counted in the header.</p>
+        <ul class="ticks"><li>Five exceptions, ranked: keep-out first</li><li>Approve or reject booking requests</li><li>Every decision logged in your name</li></ul></div>
       <div class="demo" id="demo-officer"></div>
     </div>
     <div class="side" id="side-operator" hidden>
       <div><h3>Book once. Stay quiet.</h3><p>Draw your work area and pick a time window. Inside it your vehicle is a plain cyan dot and its name, nothing that needs the officer.</p>
-        <ul class="ticks"><li>Draw the box on the harbor grid</li><li>Amend or close it any time</li><li>Your box shows on the officer's map only if you stray near its edge</li></ul></div>
+        <ul class="ticks"><li>Draw the box on the harbor grid</li><li>A harbor officer approves each request</li><li>Your box shows on the officer's map only if you stray near its edge</li></ul></div>
       <div class="demo">
         <div class="demo-top"><span>Drag to draw your work area</span><b id="box"></b></div>
         <div class="grid" id="grid"></div>
         <label>Window <input type="range" id="hours" min="1" max="8" value="2" oninput="document.getElementById('win').value = this.value + ' h'"><output id="win">2 h</output></label>
-        <button class="book" onclick="grid.book()">Book it</button>
-        <div id="booked"></div>
+        <button class="book" id="book-btn" onclick="needSignin() || (location.href = '/register')">Sign in to book</button>
       </div>
     </div>
   </section>
@@ -378,7 +379,8 @@
   <dialog id="signin">
     <form method="dialog" class="x"><button aria-label="Close">✕</button></form>
     <h2>Sign in</h2>
-    <p class="hint">For the harbor watch and registered operators.</p>
+    <div class="seg" role="tablist" id="role-tabs"><button type="button" role="tab" data-role="authority" aria-selected="true" onclick="signinAs('authority')">Harbor officer</button><button type="button" role="tab" data-role="operator" aria-selected="false" onclick="signinAs('operator')">Registered operator</button></div>
+    <p class="hint" id="role-hint">Watch contacts and review booking requests.</p>
     <form class="form" id="signin-form" onsubmit="return submitLogin(event)">
       <div><label>Username</label><input name="username" required maxlength="80" autocomplete="username"></div>
       <div><label>Password</label><input name="password" type="password" required maxlength="200" autocomplete="current-password"></div>
@@ -390,7 +392,7 @@
 
 <main id="watch" class="hide">
   <div id="map"></div>
-  <aside><div id="detail"></div><div id="queue"></div></aside>
+  <aside><div id="detail"></div><div id="queue"></div><div id="look"></div></aside>
 </main>
 <footer id="status" class="hide"></footer>
 
@@ -399,6 +401,7 @@
   <aside>
     <div id="portal">
       <h2>Register a dive</h2>
+      <div id="notice"></div>
       <form class="form" id="bookform" onsubmit="return submitBooking(event)">
         <div><label>Vehicle id</label><input name="vehicle_id" required maxlength="80" value="usc-auv-02"></div>
         <div><label>Ping id</label><input name="ping_id" required maxlength="80" value="USC-AUV-02"></div>
@@ -434,7 +437,8 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const RUNG = {1:'#9aa3b2', 2:'#5b8def', 3:'#e8b23a', 4:'#ef5350', 5:'#a98bf5'};
 const RUNG_NAME = {1:'Watch', 2:'Ask', 3:'Slow', 4:'Hold', 5:'Hand off'};
 const C = {cyan: '#5ec8ff', magenta: '#e879f9', amber: '#ffb547', grey: '#9aa8ba', red: '#ff7a7a', ink: '#e6edf3'};
-const EX_LABEL = {keepout_incursion: 'Keep-out', keepout_approach: 'Keep-out', triage: 'Triage', registered_lost: 'Lost', unknown_lost: 'Lost', out_of_area: 'Out of area'};
+const STEP = {1: 'checking bookings', 2: 'pinged, waiting for a reply', 3: 'no reply, watching closer', 4: 'waiting for your decision', 5: 'decided'};
+const EX_LABEL = {keepout_incursion: 'Keep-out', keepout_approach: 'Keep-out', triage: 'Unidentified', registered_lost: 'Lost', unknown_lost: 'Lost', out_of_area: 'Out of area'};
 let origin, assets, map, snap, bookingById = {}, selected = null;
 const L_ = {tracks: {}, lost: {}, boxes: {}, zones: {}, gates: {}, trail: null};
 const trails = {}, lastEx = {};
@@ -473,7 +477,7 @@ async function initMap(id) {
   m.on('zoomend', () => el.classList.toggle('zoomed-out', m.getZoom() < 14));
   m.on('click', () => { if (selected) { selected = null; renderDetail(snap); renderTracks(snap); } });
   if (ROUTE === 'watch') {
-    el.insertAdjacentHTML('beforeend', `<div class="legend" id="legend"><span><i class="dot"></i>registered</span><span><i class="dia"></i>unknown</span><span><i class="hol"></i>lost</span><span><i class="zn"></i>keep-out</span><span><i class="gt"></i>triage</span><button onclick="this.parentElement.classList.toggle('min')" title="legend">≡</button></div>`);
+    el.insertAdjacentHTML('beforeend', `<div class="legend" id="legend"><span><i class="dot"></i>registered</span><span><i class="dia"></i>unknown</span><span><i class="hol"></i>lost</span><span><i class="zn"></i>keep-out</span><span><i class="gt"></i>possible match</span><button onclick="this.parentElement.classList.toggle('min')" title="legend">≡</button></div>`);
   }
   return m;
 }
@@ -493,7 +497,7 @@ function statusOf(t) {
       const txt = t.zone ? `inside ${t.zone.toLowerCase()} zone` : t.eta ? `entering ${t.eta[0].toLowerCase()} · ${t.eta[1]} s` : 'entering keep-out zone';
       return {text: txt, color: grey ? C.grey : C.amber, bold: t.exception === 'keepout_incursion' && !grey};
     }
-    case 'triage': return {text: t.candidates?.length ? `triage · match? ${t.candidates[0].vehicle_id}` : 'triage · no match', color: grey ? C.grey : C.amber};
+    case 'triage': return {text: t.candidates?.length ? `could be ${t.candidates[0].vehicle_id}` : 'unidentified', color: grey ? C.grey : C.amber};
     case 'out_of_area': return {text: 'out of area', color: grey ? C.grey : C.amber};
     default: return null;
   }
@@ -512,8 +516,8 @@ function mkIcon(t, lost) {
   return L.divIcon({className: cls, html, iconSize: [0, 0], iconAnchor: [0, 0]});
 }
 const hoverText = (t, lost) => lost
-  ? `<b>${esc(t.vehicle_id || t.id)}</b> · lost ${ago(t.since)}<br>last ${t.depth.toFixed(0)} m · ${t.speed.toFixed(1)} m/s · ${t.heading_deg}°<br>± ${t.halo_r} m`
-  : `<b>${esc(t.registry ? t.registry.vehicle_id : t.id)}</b> · ${statusOf(t)?.text || 'nominal'} · ${ago(t.time_in_state)}<br>${t.depth.toFixed(0)} m · ${t.speed.toFixed(1)} m/s · ${t.heading_deg}°`;
+  ? `<b>${esc(t.vehicle_id || t.id)}</b> · lost ${ago(t.since)}<br>last ${t.depth.toFixed(0)} m · ${t.speed.toFixed(1)} m/s · ${t.heading_deg}°<br>within ${t.halo_r} m of last fix`
+  : `<b>${esc(t.registry ? t.registry.vehicle_id : t.id)}</b> · ${statusOf(t)?.text || 'in its booked area'} · ${ago(t.time_in_state)}<br>${t.depth.toFixed(0)} m · ${t.speed.toFixed(1)} m/s · ${t.heading_deg}°`;
 
 function renderTracks(s) {
   const seen = new Set(), hot = {};
@@ -568,44 +572,51 @@ function renderTracks(s) {
   }
 }
 
-async function act(path, body) {
+async function act(path, body, close) {
   const r = await fetch(path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body || {})});
   if (!r.ok) { const err = document.getElementById('detail-err'); if (err) err.textContent = (await r.json()).detail || 'refused'; }
+  else if (close) { selected = null; renderDetail(snap); renderTracks(snap); }  // done with this contact: close its card
   poll();
 }
 
 function renderDetail(s) {
   const el = document.getElementById('detail');
   const t = s.tracks.find(t => t.id === selected), lost = s.lost.find(l => l.id === selected);
-  if (!t && !lost) { el.innerHTML = ''; selected = null; return; }
+  if (!t && !lost) { el.innerHTML = ''; el.dataset.id = ''; selected = null; return; }
   const row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
   let rows = '', actions = '', title, state, color;
   if (lost) {
     title = lost.vehicle_id || lost.id; state = `lost ${ago(lost.since)}`; color = C.grey;
-    rows += row('Status', `lost · last contact ${clock(lost.last_seen)}`) + row('Depth · speed · heading', `${lost.depth.toFixed(0)} m · ${lost.speed.toFixed(1)} m/s · ${lost.heading_deg}°`) + row('Position uncertainty', `± ${lost.halo_r} m`);
-    if (lost.operator) rows += row('Registry', `${esc(lost.operator)}<br><span class="sub">${esc(lost.vehicle_id)} · BK-${lost.booking_id}</span>`);
+    rows += row('Status', `lost · last contact ${clock(lost.last_seen)}`) + row('Depth · speed · heading', `${lost.depth.toFixed(0)} m · ${lost.speed.toFixed(1)} m/s · ${lost.heading_deg}°`) + row('Could be within', `${lost.halo_r} m of last fix`);
+    if (lost.operator) rows += row('Booking', `${esc(lost.operator)}<br><span class="sub">${esc(lost.vehicle_id)} · BK-${lost.booking_id}</span>`);
     if (lost.recovery) rows += row('Recovery', `<span class="sub">${esc(lost.recovery)}</span>`);
   } else {
     const st = statusOf(t);
-    title = t.registry ? t.registry.vehicle_id : t.id; state = st ? st.text : 'nominal'; color = st ? st.color : C.ink;
-    rows += row('Status', `${esc(state)} · ${ago(t.time_in_state)}${t.registry ? '' : ` · rung ${t.rung} ${RUNG_NAME[t.rung]}`}`);
+    title = t.registry ? t.registry.vehicle_id : t.id; state = st ? st.text : 'in its booked area'; color = st ? st.color : C.ink;
+    rows += row('Status', `${esc(state)} · ${ago(t.time_in_state)}${t.registry ? '' : ` · ${STEP[t.rung]}`}`);
     rows += row('Depth · speed · heading', `${t.depth.toFixed(0)} m · ${t.speed.toFixed(1)} m/s · ${t.heading_deg}°`);
     if (t.out_of_area) rows += row('Outside booked area', `${t.distance_outside} m`);
-    if (t.registry) rows += row('Registry', `${esc(t.registry.operator)}<br><span class="sub">${esc(t.registry.vehicle_id)} · ${esc(t.registry.ping_id)} · ${clock(t.registry.window[0])} to ${clock(t.registry.window[1])}<br>box ${t.registry.box.map(Math.round).join(', ')}</span>`);
+    if (t.contacted != null) rows += row('Operator', `asked to get in touch at ${clock(t.contacted)}`);
+    if (t.registry) rows += row('Booking', `${esc(t.registry.operator)}<br><span class="sub">${esc(t.registry.vehicle_id)} · ${esc(t.registry.ping_id)} · ${clock(t.registry.window[0])} to ${clock(t.registry.window[1])}<br>box ${t.registry.box.map(Math.round).join(', ')}</span>`);
     else {
-      rows += row('Candidates', (t.candidates || []).length ? t.candidates.map(c => `${esc(c.vehicle_id)} <span class="sub">${c.score}% · ${c.distance_m} m · ${esc(c.operator)}</span>`).join('<br>') : '<span class="sub">none inside the gate</span>');
-      rows += row('Evidence', `${Math.round(t.posterior * 100)}% unauthorized<br><span class="sub">${t.features.map(esc).join(' · ')}</span>`);
+      rows += row('Could be', (t.candidates || []).length ? t.candidates.map(c => `${esc(c.vehicle_id)} <span class="sub">${c.score}% match · ${c.distance_m} m away · ${esc(c.operator)}</span>`).join('<br>') : '<span class="sub">no missing registered vehicle nearby</span>');
+      rows += row('Likely unauthorized', `${Math.round(t.posterior * 100)}%<br><span class="sub">${t.features.map(esc).join(' · ')}</span>`);
     }
-    if (t.rung < 5) actions = t.registry
-      ? `<button onclick="act('/track/${esc(t.id)}/ack')">Acknowledge</button><button onclick="act('/track/${esc(t.id)}/contact_operator')">Contact operator</button>`
-      : (t.candidates || []).map(c => `<button class="confirm" onclick="act('/track/${esc(t.id)}/match', {booking_id: ${c.booking_id}, action: 'confirm'})">Confirm match · ${esc(c.vehicle_id)}</button><button onclick="act('/track/${esc(t.id)}/match', {booking_id: ${c.booking_id}, action: 'reject'})">Reject ${esc(c.vehicle_id)}</button>`).join('') +
-        (t.rung < 4 ? `<button onclick="act('/track/${esc(t.id)}/escalate')">Escalate to Hold</button>` : '');
+    if (t.needs_officer) actions = t.registry
+      ? `<button onclick="act('/track/${esc(t.id)}/ack', null, true)">Acknowledge</button><button onclick="act('/track/${esc(t.id)}/contact_operator', null, true)">Contact operator</button>`
+      : (t.candidates || []).map(c => `<button class="confirm" onclick="act('/track/${esc(t.id)}/match', {booking_id: ${c.booking_id}, action: 'confirm'})">It's ${esc(c.vehicle_id)}</button><button onclick="act('/track/${esc(t.id)}/match', {booking_id: ${c.booking_id}, action: 'reject'})">Not ${esc(c.vehicle_id)}</button>`).join('') +
+        (t.rung < 4 ? `<button onclick="act('/track/${esc(t.id)}/escalate')">Decide now</button>` : '');
   }
-  el.innerHTML = `<div class="card detail-card">
+  // rebuilt every poll: slide in only when a different contact opens, and leave the DOM alone when nothing changed
+  const html = `<div class="card detail-card${el.dataset.id === selected ? ' still' : ''}">
     <div class="tag" style="color:${color}">${esc(title)} · ${esc(state)}</div>
     <table class="kv">${rows}</table>
     <div class="actions">${actions}<button class="ghost" onclick="selected = null; renderDetail(snap); renderTracks(snap)">Close</button></div>
     <div class="err" id="detail-err"></div></div>`;
+  if (el.dataset.id === selected && el.dataset.html === html) return;
+  const err = el.dataset.id === selected ? document.getElementById('detail-err')?.textContent : '';
+  el.innerHTML = html; el.dataset.id = selected; el.dataset.html = html;
+  if (err) document.getElementById('detail-err').textContent = err;
 }
 
 let openCard = null, openEsc = null;
@@ -614,11 +625,21 @@ addEventListener('keydown', e => {  // ops-console shortcuts: 1-4 pick an option
   if (/^[1-9]$/.test(e.key) && +e.key <= snap.options.length + (document.getElementById('more')?.hidden ? 1 : 0)) pick(+e.key - 1);
   else if (e.key === 'Enter') document.querySelector('.detail.open .confirm')?.click();
 });
+function renderLook(s) {
+  // contacts the officer can act on besides the decision card: together they make the header's "need attention"
+  const held = new Set(s.queue.map(c => c.track_id));
+  const look = s.tracks.filter(t => t.needs_officer && !held.has(t.id)).sort((a, b) => a.rank - b.rank);
+  document.getElementById('look').innerHTML = look.length ? `<h3 class="sec">${s.queue.length ? 'Also needs you' : 'Needs you'}</h3>${look.map(t => { const st = statusOf(t);
+    return `<button onclick="selected = '${esc(t.id)}'; renderDetail(snap); renderTracks(snap)"><b>${esc(t.registry ? t.registry.vehicle_id : t.id)}</b><span style="color:${st?.color}">${esc(st?.text)}</span></button>`; }).join('')}` : '';
+}
 function renderQueue(s) {
+  renderLook(s);
   const q = document.getElementById('queue');
   if (!s.queue.length) {
     openCard = null;
-    q.innerHTML = `<div class="empty"><div class="big">${s.tracks.length + s.lost.length} tracks, all handled</div><div>No decision waiting</div></div>`;
+    q.innerHTML = s.tracks.some(t => t.needs_officer)
+      ? '<div class="empty"><div class="big">No decision waiting</div><div>The contacts below still need you.</div></div>'
+      : `<div class="empty"><div class="big">${s.tracks.length + s.lost.length} tracks, nothing needs you</div><div>No decision waiting</div></div>`;
     return;
   }
   const c = s.queue[0];
@@ -637,7 +658,7 @@ function renderQueue(s) {
       <button class="confirm" onclick="decide('${esc(c.track_id)}', ${i})">Confirm</button>
     </div>`;
   q.innerHTML = `${s.queue.length > 1 ? `<p class="hint">+${s.queue.length - 1} more waiting</p>` : ''}<div class="card">
-    <div class="tag">Hold · rung 4 · <span id="wait">${Math.max(0, Math.round(s.t - c.since))} s</span> waiting</div>
+    <div class="tag">Your decision · waiting <span id="wait">${Math.max(0, Math.round(s.t - c.since))} s</span></div>
     ${c.escalated_at != null ? `<div class="banner">Re-pushed to the duty supervisor at ${clock(c.escalated_at)}: 90 s with no decision. No action taken.</div>` : ''}
     <h2>${esc(c.headline)}</h2>
     <div class="meta"><span>${esc(c.track_id)}</span><span>${Math.round(c.x)}, ${Math.round(c.y)} m</span><span>${c.speed.toFixed(1)} m/s</span><span>${c.depth.toFixed(0)} m deep</span></div>
@@ -668,10 +689,10 @@ async function decide(trackId, i) {
 
 function nowText(s, t, known) {
   const st = statusOf(t);
-  if (t.registry) return st ? st.text + (t.acked ? ' · acknowledged' : '') : 'nominal · inside its booked area';
-  const ladder = {1: `watching · no registry match for ${ago(t.age)}`, 2: `asked · ping sent ${ago(s.t - t.rung_since)} ago, no reply`,
-    3: `slowing · drafts ready, not sent · ${t.pings} pings, no reply`, 4: `hold · with the officer for ${ago(s.t - t.rung_since)}`,
-    5: `handed off · ${esc(t.decision || '')}` + (t.task ? ` · drone ${esc(t.task.status.replace('_', ' '))}${t.task.reports ? ` (${t.task.reports} reports)` : ''}` : '')}[t.rung];
+  if (t.registry) return st ? st.text + (t.acked ? ' · acknowledged' : '') + (t.contacted != null ? (t.needs_officer ? ` · still outside ${ago(s.t - t.contacted)} after contacting the operator` : ' · operator contacted') : '') : 'inside its booked area';
+  const ladder = {1: `no booking found · seen for ${ago(t.age)}`, 2: `pinged ${ago(s.t - t.rung_since)} ago, no reply yet`,
+    3: `no reply to ${t.pings} pings · notices drafted, not sent`, 4: `waiting for your decision · ${ago(s.t - t.rung_since)}`,
+    5: `decided: ${esc(t.decision || '')}` + (t.task ? ` · drone ${esc(t.task.status.replace('_', ' '))}${t.task.reports ? ` (${t.task.reports} reports)` : ''}` : '')}[t.rung];
   return (st && t.rung < 5 ? `<span class="flag">${esc(st.text)}</span> · ` : '') + ladder;
 }
 const expanded = new Set(), histories = {};
@@ -693,11 +714,11 @@ function renderStatus(s) {
     .sort((a, b) => a.rank - b.rank || a.t.id.localeCompare(b.t.id));
   const rows = items.map(({t, lost}) => {
     if (lost) return row(t.id, 'lost', C.grey, esc(t.vehicle_id || t.id), 'Lost', '',
-      `last fix ${Math.round(t.x)}, ${Math.round(t.y)} at ${clock(t.last_seen)} · ± ${t.halo_r} m · ${t.vehicle_id ? 'recovery line sent to the operator' : 'drift cone kept for patrol'}`);
+      `last fix ${Math.round(t.x)}, ${Math.round(t.y)} at ${clock(t.last_seen)} · within ${t.halo_r} m · ${t.vehicle_id ? 'recovery line sent to the operator' : 'search area kept for patrol'}`);
     const known = t.registry;
     const color = t.exception ? (t.acked || t.rung === 5 ? C.grey : C.amber) : known ? C.cyan : C.magenta;
     return row(t.id, t.rank === 1 ? 'r4' : t.exception ? 'r3' : `r${t.rung}`, color, known ? esc(known.vehicle_id) : t.id,
-      t.exception ? EX_LABEL[t.exception] : known ? 'Nominal' : RUNG_NAME[t.rung], known ? '' : `${Math.round(t.posterior * 100)}%`, nowText(s, t, known));
+      t.exception ? EX_LABEL[t.exception] : known ? 'Booked' : RUNG_NAME[t.rung], known ? '' : `${Math.round(t.posterior * 100)}%`, nowText(s, t, known));
   });
   document.getElementById('status').innerHTML = rows.join('') || '<div class="st"><span></span><span class="name" style="color:var(--ink-3)">No tracks</span></div>';
 }
@@ -706,25 +727,36 @@ function renderHeader(s) {
   const el = document.getElementById('clock');
   el.className = 'clock';
   const c = s.counts;
-  el.innerHTML = `${c.total} contact${c.total === 1 ? '' : 's'} · ${c.nominal} nominal${c.attention ? ` · <span class="flag">${c.attention} need${c.attention === 1 ? 's' : ''} attention</span>` : ''}${c.lost ? ` · ${c.lost} lost` : ''}${s.speed !== 1 ? ` · ${s.speed}x` : ''}${s.running || s.t >= s.end ? '' : ' · paused'}`;
+  if (!c) { el.textContent = clock(s.t); return; }  // operators get the clock, not the contact picture
+  const toReview = s.bookings.filter(b => b.status === 'pending').length;
+  document.getElementById('nav-register').textContent = 'Bookings' + (toReview ? ` · ${toReview} to review` : '');
+  el.innerHTML = `${c.total} contact${c.total === 1 ? '' : 's'}${c.attention ? ` · <span class="flag">${c.attention} need${c.attention === 1 ? 's' : ''} attention</span>` : ''}${c.lost ? ` · ${c.lost} lost` : ''}${s.running || s.t >= s.end ? '' : ' · paused'}`;
 }
 
 const expandedBookings = new Set();
+async function review(id, action) {
+  const r = await fetch(`/booking/${id}/review`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({action})});
+  if (!r.ok) document.getElementById('go').innerHTML = `<div class="go no">${esc((await r.json()).detail)}</div>`;
+  poll();
+}
 function toggleBooking(id) { expandedBookings.has(id) ? expandedBookings.delete(id) : expandedBookings.add(id); renderBookingTable(snap); }
 function renderBookingTable(s) {
   const authority = me && me.role === 'authority';  // harbor staff see the whole registry; operators see their own
-  const mine = s.bookings.filter(b => me && (authority || b.operator === me.operator));
+  const mine = s.bookings.filter(b => me && (authority || b.operator === me.operator)).sort((a, b) => (b.status === 'pending') - (a.status === 'pending'));
   const rows = mine.map(b => {
     // one word of status now; everything else sits behind Details
     const [status, cls] = b.recovery ? ['lost', 'st-lost'] : b.out_of_area ? ['out of area', 'st-flag']
       : b.status === 'amended' ? ['window extended', 'st-amended'] : [b.display_status, `st-${b.display_status}`];
-    const details = [b.note, b.recovery, b.status === 'amended' ? `Window now ${clock(b.window_start)} to ${clock(b.window_end)}` : ''].filter(Boolean);
+    const details = [b.note, b.recovery, b.reviewed_by && `${b.status === 'rejected' ? 'Rejected' : 'Approved'} by ${b.reviewed_by}`, b.status === 'amended' ? `Window now ${clock(b.window_start)} to ${clock(b.window_end)}` : ''].filter(Boolean);
     const open = expandedBookings.has(b.id);
     return `<tr><td>BK-${b.id}</td><td>${esc(b.vehicle_id)}<br><span class="sub">${esc(b.ping_id)}${authority ? ' · ' + esc(b.operator) : ''}</span></td>
       <td class="sub">${Math.round(b.x_min)},${Math.round(b.y_min)} to ${Math.round(b.x_max)},${Math.round(b.y_max)}</td><td class="sub">${clock(b.window_start)}<br>${clock(b.window_end)}</td>
-      <td class="${cls}">${esc(status)}${details.length ? `<br><button class="more" onclick="toggleBooking(${b.id})">${open ? 'Less' : 'Details'}</button>` : ''}</td></tr>` +
+      <td class="${cls}">${esc(status === 'pending' ? 'pending review' : status)}${authority && b.status === 'pending'
+        ? `<br><button class="more" onclick="review(${b.id}, 'approve')">Approve</button> <button class="more" onclick="review(${b.id}, 'reject')">Reject</button>` : ''}${details.length ? `<br><button class="more" onclick="toggleBooking(${b.id})">${open ? 'Less' : 'Details'}</button>` : ''}</td></tr>` +
       (open ? `<tr class="details"><td colspan="5">${details.map(d => `<div>${esc(d)}</div>`).join('')}</td></tr>` : '');
   }).join('');
+  // requests from the harbor watch go on top of the operator's portal, not behind Details
+  document.getElementById('notice').innerHTML = authority ? '' : mine.filter(b => b.contact_request).map(b => `<div class="banner">${esc(b.contact_request)}</div>`).join('');
   document.getElementById('bookings-title').textContent = authority ? 'Registered vehicles' : 'Your bookings';
   document.getElementById('bookings').innerHTML = rows ? `<tr><th>#</th><th>Vehicle</th><th>Box (m)</th><th>Window</th><th>Status</th></tr>${rows}` : '<tr><td class="sub">No bookings yet</td></tr>';
 }
@@ -818,26 +850,35 @@ const STORY = [
   [1, 0, 'T-7 spotted 140 m off the north pier, 2.1 m/s, 12 m deep. No booking covers it.'],
   [2, 15, 'Acoustic ping: identify yourself. 10 s to answer.'],
   [3, 25, 'No reply. Two more pings. Patrol notice drafted, not sent.'],
-  [4, 41, 'Track heads for the fuel pier keep-out zone. Zone lights up, T-7 jumps to rank 1, one card on the officer\'s screen.'],
+  [4, 41, 'Track heads for the fuel pier keep-out zone. Zone lights up, T-7 jumps to the top, one decision card on the officer\'s screen.'],
   [5, 58, 'Officer picks "Notify Coast Guard". Sent, logged in their name.'],
 ];
 const ANSWER = [0, 21, 'Reply: AUV-12, Bayline Survey. Booking found. Now a cyan dot and a name; the map goes quiet.'];
 const how = (() => {
   const ladder = document.getElementById('ladder'), log = document.getElementById('how-log');
-  let timer = null;
+  let timer = null, auto = !matchMedia('(prefers-reduced-motion: reduce)').matches, visible = false;  // autoplay until the visitor takes over
   const line = ([r, dt, text]) => `<div class="ln${r === 4 ? ' hot' : ''}"><time>${new Date((50525 + dt) * 1000).toISOString().slice(11, 19)}</time><span class="gl"><i class="${r ? 'dia' : 'dot'}"></i>${text}</span></div>`;
   const mark = (k, ok) => [...ladder.children].forEach((li, i) => li.className = i === k ? (ok ? 'ok' : 'on') : i < k ? 'done' : '');
   const stop = () => { clearTimeout(timer); log.querySelector('.choice')?.remove(); };
   function step(k) {
     stop(); log.insertAdjacentHTML('beforeend', line(STORY[k])); mark(k);
-    if (k === 1) log.insertAdjacentHTML('beforeend', '<div class="choice"><button onclick="how.answer()">It answers</button><button onclick="how.step(2)">It stays silent</button></div>');
-    else if (k < STORY.length - 1) timer = setTimeout(() => step(k + 1), 1600);
+    if (k === 1) {
+      log.insertAdjacentHTML('beforeend', '<div class="choice"><button onclick="how.silent()">It stays silent</button><button onclick="how.answer()">It answers</button></div>');
+      if (auto) timer = setTimeout(() => step(2), 3000);
+    } else if (k < STORY.length - 1) timer = setTimeout(() => step(k + 1), 1600);
+    else if (auto) timer = setTimeout(() => visible ? play() : (log.dataset.idle = 1), 4000);
   }
-  function go(k) { stop(); log.innerHTML = STORY.slice(0, k + 1).map(line).join(''); mark(k); }
+  function play() { stop(); delete log.dataset.idle; log.innerHTML = ''; step(0); }
+  function go(k) { auto = false; stop(); log.innerHTML = STORY.slice(0, k + 1).map(line).join(''); mark(k); }
   ladder.addEventListener('click', e => { const li = e.target.closest('li'); if (li) go([...ladder.children].indexOf(li)); });
   ladder.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.closest('li')?.click(); } });
-  new IntersectionObserver(([e], o) => { if (e.isIntersecting) { ladder.classList.add('seen'); o.disconnect(); } }, {threshold: 0.4}).observe(ladder);
-  return {step, play() { stop(); log.innerHTML = ''; step(0); }, answer() { stop(); log.insertAdjacentHTML('beforeend', line(ANSWER)); mark(1, true); }};
+  new IntersectionObserver(([e]) => {
+    visible = e.isIntersecting;
+    if (!visible) return;
+    ladder.classList.add('seen');
+    if (auto && (!log.querySelector('.ln') || log.dataset.idle)) play();
+  }, {threshold: 0.4}).observe(ladder);
+  return {play, silent() { auto = false; step(2); }, answer() { auto = false; stop(); log.insertAdjacentHTML('beforeend', line(ANSWER)); mark(1, true); }};
 })();
 
 // "Who it's for": a tab per side, each with a small working demo.
@@ -847,7 +888,7 @@ function who(side) {
 }
 const DEMO_OPTS = ['Keep watching and re-ping', 'Task observation drone', 'Send patrol boat to observe', 'Notify Coast Guard, keep channel open'];
 function officerDemo(pick) {
-  document.getElementById('demo-officer').innerHTML = `<div class="card"><div class="tag">Hold · entering keep-out · 12 s waiting</div>
+  document.getElementById('demo-officer').innerHTML = `<div class="card"><div class="tag">Your decision · entering keep-out · waiting 12 s</div>
     <h2>Unbooked vehicle near the fuel pier</h2>
     <svg class="mini" viewBox="0 0 400 120" role="img" aria-label="T-7, an unknown contact, entering the fuel pier keep-out zone">
       <pattern id="mini-hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#ff7a7a" stroke-width="1.2" stroke-opacity=".6"/></pattern>
@@ -860,7 +901,22 @@ function officerDemo(pick) {
       : `<div class="msg">Logged: "${DEMO_OPTS[pick]}", in your name, 14:03:27.</div><button onclick="officerDemo()">Try another</button>`) + '</div>';
 }
 officerDemo();
-const grid = (() => {
+// Officers and operators sign in through separate doors; the server refuses an account at the wrong one.
+let signinRole = 'authority';
+function signinAs(role) {
+  signinRole = role;
+  document.querySelectorAll('#role-tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.role === role));
+  document.getElementById('role-hint').textContent = role === 'authority' ? 'Watch contacts and review booking requests.' : 'Request a dive slot for your own vehicles.';
+  document.getElementById('login-err').textContent = '';
+}
+// Anyone can draw; booking needs a known operator, so Book opens operator sign-in.
+function needSignin() {
+  if (me) return false;
+  signinAs('operator');
+  if (!signin.open) signin.showModal();
+  return true;
+}
+(() => {
   const el = document.getElementById('grid'), W = 12, H = 6, M = 20;  // M metres per cell
   let a = [3, 1], b = [6, 3], drag = false;
   el.innerHTML = '<div></div>'.repeat(W * H);
@@ -871,27 +927,18 @@ const grid = (() => {
   function paint() {
     const [x0, x1, y0, y1] = rect();
     Object.assign(box.style, {left: `${x0 / W * 100}%`, top: `${y0 / H * 100}%`, width: `${(x1 - x0 + 1) / W * 100}%`, height: `${(y1 - y0 + 1) / H * 100}%`});
-    el.querySelector('.veh')?.remove();
     document.getElementById('box').textContent = `${(x1 - x0 + 1) * M} × ${(y1 - y0 + 1) * M} m`;
-    document.getElementById('booked').innerHTML = '';
   }
   el.addEventListener('pointerdown', e => { const p = at(e.target); if (p) { a = b = p; drag = true; el.classList.add('drag'); paint(); } });
   el.addEventListener('pointermove', e => { const p = drag && at(document.elementFromPoint(e.clientX, e.clientY)); if (p) { b = p; paint(); } });
   addEventListener('pointerup', () => { drag = false; el.classList.remove('drag'); });
   paint();
-  return {book() {
-    const [x0, x1, y0, y1] = rect(), h = +document.getElementById('hours').value;
-    el.querySelector('.veh')?.remove();
-    el.insertAdjacentHTML('beforeend', `<i class="veh" style="left:${(x0 + x1 + 1) / 2 / W * 100}%; top:${(y0 + y1 + 1) / 2 / H * 100}%"></i>`);
-    document.getElementById('booked').innerHTML = `<div class="msg">Booked ${document.getElementById('box').textContent}, 14:00–${14 + h}:00. On the officer's map: a cyan dot, AUV-12, nothing else.</div>`;
-  }};
 })();
 
 let me = null;
 async function whoami() {
   const r = await fetch('/me');
   me = r.ok ? await r.json() : null;
-  document.getElementById('who').textContent = me ? me.operator : '';
   document.querySelector('.right').classList.toggle('hide', !me);
   const op = document.getElementById('op-name');
   if (op && me) op.textContent = me.operator;
@@ -900,16 +947,23 @@ async function whoami() {
     document.getElementById('site-nav').classList.toggle('hide', !!me);
     document.getElementById('continue').classList.toggle('hide', !me);
     document.getElementById('continue').previousElementSibling.classList.toggle('hide', !!me);
+    document.getElementById('book-btn').textContent = !me ? 'Sign in to book' : me.role === 'authority' ? 'Review booking requests' : 'Book it in the operator portal';
+    document.getElementById('continue').innerHTML = me?.role === 'authority'
+      ? '<a class="primary" href="/watch">Open the officer console</a><a class="ghost-link" href="/register">Review bookings</a>'
+      : '<a class="primary" href="/register">Open the operator portal</a>';
   }
+  const officer = me?.role === 'authority';
+  document.getElementById('nav-watch').classList.toggle('hide', !officer);  // operators never see contacts
+  document.getElementById('nav-register').textContent = officer ? 'Bookings' : 'Operator portal';
   return me;
 }
 async function submitLogin(ev) {
   ev.preventDefault();
   const f = ev.target, err = document.getElementById('login-err');
   const r = await fetch('/login', {method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({username: f.username.value, password: f.password.value})});
-  if (!r.ok) { err.textContent = r.status === 401 ? "That didn't match. Try again." : 'Sign-in failed. Try again.'; return false; }
-  location.href = '/watch';
+    body: JSON.stringify({username: f.username.value, password: f.password.value, role: signinRole})});
+  if (!r.ok) { err.textContent = r.status === 401 ? "That didn't match. Try again." : r.status === 403 ? `Wrong door: ${(await r.json()).detail}.` : 'Sign-in failed. Try again.'; return false; }
+  location.href = (await r.json()).role === 'authority' ? '/watch' : '/register';
   return false;
 }
 async function logout() { await fetch('/logout', {method: 'POST'}); location.href = '/'; }
@@ -953,7 +1007,7 @@ async function submitBooking(ev) {
   const j = await r.json();
   if (r.status === 401) { await whoami(); return false; }
   if (!r.ok) { go.innerHTML = `<div class="go no">No-go · ${esc(JSON.stringify(j.detail))}</div>`; return false; }
-  go.innerHTML = j.ok ? `<div class="go yes">Go · booked as BK-${j.booking.id}</div>` : `<div class="go no">No-go · conflicts with ${esc(j.conflict)}</div>`;
+  go.innerHTML = j.ok ? `<div class="go yes">Sent for review as BK-${j.booking.id}. Your vehicle counts as registered once a harbor officer approves it.</div>` : `<div class="go no">No-go · conflicts with ${esc(j.conflict)}</div>`;
   if (j.ok && drawRect) { map.removeLayer(drawRect); drawRect = null; }
   poll();
   return false;
@@ -972,7 +1026,7 @@ async function poll() {
   renderHeader(snap);
   if (ROUTE === 'watch') { for (const id of expanded) histories[id] = await fetchHistory(id); renderBookings(snap); renderTracks(snap); renderDetail(snap); renderQueue(snap); renderStatus(snap); }
   else if (ROUTE === 'register') {
-    renderBookings(snap); renderTracks(snap); renderBookingTable(snap);
+    renderBookings(snap); if (snap.tracks) renderTracks(snap); renderBookingTable(snap);
     const f = document.getElementById('bookform');
     if (!f.start.value) { f.start.value = hhmm(snap.t); f.end.value = hhmm(snap.t + 3600); }
   } else if (ROUTE === 'control') {
@@ -984,6 +1038,11 @@ async function poll() {
   await whoami();
   if (ROUTE === 'start') { sonar = startSonar(document.getElementById('sonar')); return; }
   if (!me) { location.replace('/'); return; }
+  if (me.role !== 'authority' && (ROUTE === 'watch' || ROUTE === 'control')) { location.replace('/register'); return; }
+  if (me.role === 'authority' && ROUTE === 'register') {  // officers review requests; they don't book
+    document.getElementById('bookform').classList.add('hide');
+    document.getElementById('portal').firstElementChild.textContent = 'Booking requests';
+  }
   if (ROUTE === 'watch') map = await initMap('map');
   if (ROUTE === 'register') { map = await initMap('map2'); setupRegister(); }
   await poll();

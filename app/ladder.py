@@ -11,6 +11,7 @@ OPTIONS = ["Keep watching and re-ping", "Task observation drone", "Send patrol b
            "Notify Coast Guard, keep channel open"]
 DRONE_OPTION = OPTIONS[1]
 HIDDEN_OPTION = "Close channel"  # behind a second click; needs a typed reason
+CONTACT_FOLLOWUP_S = 120  # still outside this long after the operator was contacted -> back to the officer
 UNMATCHED_S = 15     # rung 1 -> 2 after this long with no registry match
 PING_TIMEOUT_S = 10  # silence declared this long after the first ping
 ASK_P = 0.5          # rung 2 -> 3 posterior threshold (with silence)
@@ -145,7 +146,7 @@ class Ladder:
         """Every second for identified vehicles: flag leaving the booked area, clear on return."""
         d = self.reg.distance_outside(b, tr.x, tr.y)
         if d > 0 and not tr.out_of_area:
-            tr.out_of_area, tr.out_of_area_since, tr.acked = True, t, False
+            tr.out_of_area, tr.out_of_area_since, tr.acked, tr.contacted = True, t, False, None
             b.note = f"{b.vehicle_id} reported {d:.0f} m outside the booked area at {t:.0f} s; area not amended"
             self.log(t, tr, "out_of_area", f"{b.vehicle_id} (BK-{b.id}) is {d:.0f} m outside its booked area; area kept as registered, operator notified")
         elif d == 0 and tr.out_of_area:
@@ -209,8 +210,13 @@ class Ladder:
         self.log(t, tr, "rung_change", f"exception acknowledged by {officer}")
 
     def contact_operator(self, tr, b, t, officer):
-        b.note = f"{officer} asked {b.operator} to contact the harbor watch about {b.vehicle_id} at {t:.0f} s"
-        self.log(t, tr, "reconciled", f"operator {b.operator} contacted about {b.vehicle_id} (stub)")
+        """Puts a request in front of the operator in its portal; the officer's flag counts as handled."""
+        if tr.contacted is not None and t - tr.contacted < CONTACT_FOLLOWUP_S:
+            raise ValueError(f"{b.operator} was asked about {b.vehicle_id} {t - tr.contacted:.0f} s ago")
+        why = "it is outside its booked area" if tr.out_of_area else "it is close to a keep-out zone"
+        tr.contacted = t
+        b.contact_request = f"The harbor watch asks you to get in touch about {b.vehicle_id}: {why}."
+        self.log(t, tr, "operator_contacted", f"{officer} asked {b.operator} to get in touch about {b.vehicle_id} ({why})")
 
     def decide(self, tr, option, officer, note, t):
         if tr.rung != 4:

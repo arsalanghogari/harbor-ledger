@@ -45,8 +45,9 @@ Stack: Python 3.13, FastAPI + uvicorn, numpy, scipy, pytest; Leaflet from CDN, v
    the last contact row (no tail), otherwise every known vehicle turns into a lost record at the end.
 10. **D plateaus at 0.64**, not the 0.55 in the doc, straight from the likelihood table (8 x 6 x 1/1.5 x 1/2 on
     prior odds 1/9).
-11. **Drift cone is literal**: covariance grown 10 min under CV-quiet, drawn as 1-sigma circles at 2, 5 and
-    10 min (about 120, 440 and 1200 m). The 10 min circle is honest and large.
+11. **Drift cone is literal**: covariance grown 10 min under CV-quiet (about 120, 440 and 1200 m at 2, 5 and
+    10 min). The map draws only the 2 and 5 min rings; the 10 min ring covered the whole harbor. All rings
+    are non-interactive so they never steal hover from the markers.
 12. **Officer name** is required on every decision; the hidden "Close channel" option needs a typed reason,
     checked server side.
 

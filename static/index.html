@@ -320,13 +320,13 @@ function renderTracks(s) {
       x = live[t.id] = {
         m: L.circleMarker(ll, {radius: 8, color, fillColor: color, fillOpacity: 0.9, weight: 2}).bindTooltip(tip, {sticky: true}).addTo(map),
         lbl: L.tooltip({permanent: true, direction: 'right', offset: [11, 0], className: 'lbl'}).setLatLng(ll).setContent(name).addTo(map),
-        p: L.polyline(path, {color, weight: 1.5, dashArray: '3 7', opacity: 0.8}).addTo(map), c: null};
+        p: L.polyline(path, {color, weight: 1.5, dashArray: '3 7', opacity: 0.8, interactive: false}).addTo(map), c: null};
     } else {
       x.m.setLatLng(ll).setStyle({color, fillColor: color}).setTooltipContent(tip);
       x.lbl.setLatLng(ll).setContent(name);
       x.p.setLatLngs(path).setStyle({color});
     }
-    if (t.keepout && !x.c) x.c = L.circle(ll, {radius: t.keepout, color: '#e8b23a', weight: 1, dashArray: '6 6', fillOpacity: 0.04}).addTo(map);
+    if (t.keepout && !x.c) x.c = L.circle(ll, {radius: t.keepout, color: '#e8b23a', weight: 1, dashArray: '6 6', fillOpacity: 0.04, interactive: false}).addTo(map);
     if (x.c) x.c.setLatLng(ll);
   }
   for (const id in live) if (!seen.has(id)) { const x = live[id]; [x.m, x.lbl, x.p, x.c].forEach(l => l && map.removeLayer(l)); delete live[id]; }
@@ -337,10 +337,10 @@ function renderTracks(s) {
     const g = L.layerGroup().addTo(map);
     L.circleMarker(ll, {radius: 7, color: LOST, fillOpacity: 0, weight: 2, dashArray: '3 3'}).bindTooltip(esc(t.recovery), {sticky: true}).addTo(g);
     L.tooltip({permanent: true, direction: 'right', offset: [11, 0], className: 'lbl'}).setLatLng(ll).setContent(`${known ? esc(known.vehicle_id) : t.id} · lost`).addTo(g);
-    const style = {2: [0.5, 0.08], 5: [0.3, 0.04], 10: [0.15, 0]};
-    for (const c of t.cone) L.circle(toLL(c.x, c.y), {radius: c.radius, color: LOST, weight: 1, opacity: style[c.minutes][0], fillOpacity: style[c.minutes][1], dashArray: '4 6'})
-      .bindTooltip(`${c.minutes} min drift · 1σ ${Math.round(c.radius)} m`, {sticky: true}).addTo(g);
-    L.polyline([ll, ...t.cone.map(c => toLL(c.x, c.y))], {color: LOST, weight: 1, dashArray: '2 6', opacity: 0.5}).addTo(g);
+    // 2 and 5 minute search rings only; the 10 minute ring is over a kilometre and would cover the map
+    const rings = t.cone.filter(c => c.minutes <= 5), style = {2: [0.5, 0.08], 5: [0.3, 0.04]};
+    for (const c of rings) L.circle(toLL(c.x, c.y), {radius: c.radius, color: LOST, weight: 1, opacity: style[c.minutes][0], fillOpacity: style[c.minutes][1], dashArray: '4 6', interactive: false}).addTo(g);
+    L.polyline([ll, ...rings.map(c => toLL(c.x, c.y))], {color: LOST, weight: 1, dashArray: '2 6', opacity: 0.5, interactive: false}).addTo(g);
     lostL[t.id] = g;
   }
   for (const id in lostL) if (!s.lost.some(t => t.id === id)) { map.removeLayer(lostL[id]); delete lostL[id]; }

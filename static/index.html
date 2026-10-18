@@ -94,6 +94,8 @@
   .opt .n { color: var(--ink-3); font: 500 13px var(--mono); margin-right: 10px; }
   .opt.on { border-color: var(--accent); background: oklch(25% 0.03 220); }
   .ghost { background: transparent; color: var(--ink-3); border-style: dashed; font-size: 14px; }
+  button.draw { width: 100%; text-align: center; }
+  button.draw.on { color: var(--ok); border-color: var(--ok); border-style: solid; }
   .detail { display: none; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.45; color: var(--ink-2); }
   .detail.open { display: flex; flex-direction: column; gap: 10px; animation: rise .25s var(--ease); }
   .detail b { color: var(--ink); font-weight: 600; }
@@ -234,10 +236,10 @@
   <aside>
     <div id="portal">
       <h2>Register a dive</h2>
-      <p class="hint">Booking as <b id="op-name"></b>. Click two corners on the map to draw the box, or type it. Times are harbor local.</p>
       <form class="form" id="bookform" onsubmit="return submitBooking(event)">
         <div><label>Vehicle id</label><input name="vehicle_id" required maxlength="80" value="usc-auv-02"></div>
         <div><label>Ping id</label><input name="ping_id" required maxlength="80" value="USC-AUV-02"></div>
+        <div class="full"><button type="button" id="draw-btn" class="ghost draw">Draw area on map</button></div>
         <div><label>x min (m east)</label><input name="x_min" type="number" step="1" required></div>
         <div><label>y min (m north)</label><input name="y_min" type="number" step="1" required></div>
         <div><label>x max</label><input name="x_max" type="number" step="1" required></div>
@@ -488,19 +490,32 @@ async function submitLogin(ev) {
 }
 async function logout() { await fetch('/logout', {method: 'POST'}); location.href = '/'; }
 
-let corners = [], drawRect = null;
+let drawing = false, drawStart = null, drawRect = null;
 function setupRegister() {
-  const f = document.getElementById('bookform');
-  map.on('click', e => {
-    corners.push(fromLL(e.latlng));
-    if (corners.length === 2) {
-      const [a, b] = corners; corners = [];
-      f.x_min.value = Math.round(Math.min(a[0], b[0])); f.x_max.value = Math.round(Math.max(a[0], b[0]));
-      f.y_min.value = Math.round(Math.min(a[1], b[1])); f.y_max.value = Math.round(Math.max(a[1], b[1]));
-      const bounds = [toLL(+f.x_min.value, +f.y_min.value), toLL(+f.x_max.value, +f.y_max.value)];
-      if (drawRect) drawRect.setBounds(bounds); else drawRect = L.rectangle(bounds, {color: '#6fd48a', weight: 2, fillOpacity: 0.1}).addTo(map);
-    }
-  });
+  // Draw area on map: drag a rectangle, the four coordinate fields fill in; typing in the fields moves the rectangle.
+  const f = document.getElementById('bookform'), btn = document.getElementById('draw-btn');
+  const coords = [f.x_min, f.y_min, f.x_max, f.y_max];
+  const setRect = () => {
+    if (!coords.every(i => i.value !== '')) return;
+    const b = [toLL(+f.x_min.value, +f.y_min.value), toLL(+f.x_max.value, +f.y_max.value)];
+    if (drawRect) drawRect.setBounds(b); else drawRect = L.rectangle(b, {color: '#6fd48a', weight: 2, fillOpacity: 0.12, interactive: false}).addTo(map);
+  };
+  const fill = (a, b) => {
+    f.x_min.value = Math.round(Math.min(a[0], b[0])); f.x_max.value = Math.round(Math.max(a[0], b[0]));
+    f.y_min.value = Math.round(Math.min(a[1], b[1])); f.y_max.value = Math.round(Math.max(a[1], b[1]));
+    setRect();
+  };
+  const setDrawing = on => {
+    drawing = on; drawStart = null;
+    btn.classList.toggle('on', on); btn.textContent = on ? 'Drag on the map to draw the area' : 'Draw area on map';
+    map.getContainer().style.cursor = on ? 'crosshair' : '';
+    on ? map.dragging.disable() : map.dragging.enable();
+  };
+  btn.onclick = () => setDrawing(!drawing);
+  map.on('mousedown', e => { if (drawing) drawStart = fromLL(e.latlng); });
+  map.on('mousemove', e => { if (drawing && drawStart) fill(drawStart, fromLL(e.latlng)); });
+  map.on('mouseup', e => { if (drawing && drawStart) { fill(drawStart, fromLL(e.latlng)); setDrawing(false); } });
+  coords.forEach(i => i.addEventListener('input', setRect));
 }
 const hhmm = s => clock(s).slice(0, 5);
 const toSec = v => { const [h, m] = v.split(':').map(Number); return h * 3600 + m * 60 - T0; };

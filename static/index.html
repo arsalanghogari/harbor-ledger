@@ -242,7 +242,7 @@
         <div class="full"><button type="submit" class="confirm" style="width:100%">Check and book</button></div>
       </form>
       <div id="go"></div>
-      <h3 class="sec">Your bookings</h3>
+      <h3 class="sec" id="bookings-title">Your bookings</h3>
       <table id="bookings"></table>
     </div>
   </aside>
@@ -441,10 +441,12 @@ function renderHeader(s) {
 }
 
 function renderBookingTable(s) {
-  const mine = s.bookings.filter(b => me && b.operator === me.operator);
-  const rows = mine.map(b => `<tr><td>BK-${b.id}</td><td>${esc(b.vehicle_id)}<br><span class="sub">${esc(b.ping_id)}</span></td>
+  const authority = me && me.role === 'authority';  // harbor staff see the whole registry; operators see their own
+  const mine = s.bookings.filter(b => me && (authority || b.operator === me.operator));
+  const rows = mine.map(b => `<tr><td>BK-${b.id}</td><td>${esc(b.vehicle_id)}<br><span class="sub">${esc(b.ping_id)}${authority ? ' · ' + esc(b.operator) : ''}</span></td>
     <td class="sub">${Math.round(b.x_min)},${Math.round(b.y_min)} to ${Math.round(b.x_max)},${Math.round(b.y_max)}</td><td class="sub">${clock(b.window_start)}<br>${clock(b.window_end)}</td>
     <td class="st-${esc(b.display_status)}">${esc(b.display_status)}${b.status === 'amended' ? `<div class="note">amended by system: ${esc(b.note)}</div>` : ''}${b.recovery ? `<div class="rec">${esc(b.recovery)}</div>` : ''}</td></tr>`).join('');
+  document.getElementById('bookings-title').textContent = authority ? 'Registered vehicles' : 'Your bookings';
   document.getElementById('bookings').innerHTML = rows ? `<tr><th>#</th><th>Vehicle</th><th>Box (m)</th><th>Window</th><th>Status</th></tr>${rows}` : '<tr><td class="sub">No bookings yet</td></tr>';
 }
 

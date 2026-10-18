@@ -2,7 +2,7 @@
 config/users.json and HMAC-signed session cookies. Everything the app needs is behind
 current_operator(), so Cognito or SSO can replace this module later without touching routes.
 
-  python -m app.auth add <username> "<Operator name>"   # prompts for a password
+  python -m app.auth add <username> "<Name>" [--authority]   # prompts for a password
   python -m app.auth seed                                # writes the three demo accounts
 """
 import getpass
@@ -41,7 +41,7 @@ def verify(username: str, password: str):
     so the response time does not reveal which usernames exist."""
     u = load_users().get(username) or {"salt": "00" * 16, "hash": "00" * 64, "operator": ""}
     ok = hmac.compare_digest(hash_password(password, u["salt"]), u["hash"])
-    return {"username": username, "operator": u["operator"]} if ok and username in load_users() else None
+    return {"username": username, "operator": u["operator"], "role": u.get("role", "operator")} if ok and username in load_users() else None
 
 
 def issue(username: str) -> str:
@@ -64,28 +64,29 @@ def current_operator(harbor_session: str | None = Cookie(default=None)) -> dict:
     user = load_users().get(username) if username else None
     if not user:
         raise HTTPException(401, "sign in as a registered operator first")
-    return {"username": username, "operator": user["operator"]}
+    return {"username": username, "operator": user["operator"], "role": user.get("role", "operator")}
 
 
-def add_user(username: str, operator: str, password: str):
+def add_user(username: str, operator: str, password: str, role: str = "operator"):
+    """role: 'operator' sees only its own bookings; 'authority' (harbor staff) sees the whole registry."""
     users = load_users()
     salt = secrets.token_hex(16)
-    users[username] = {"operator": operator, "salt": salt, "hash": hash_password(password, salt)}
+    users[username] = {"operator": operator, "role": role, "salt": salt, "hash": hash_password(password, salt)}
     with open(USERS, "w") as f:
         json.dump(users, f, indent=2)
 
 
 if __name__ == "__main__":
     if sys.argv[1:2] == ["add"] and len(sys.argv) == 4:
-        add_user(sys.argv[2], sys.argv[3], getpass.getpass("password: "))
+        add_user(sys.argv[2], sys.argv[3], getpass.getpass("password: "), "authority" if "--authority" in sys.argv else "operator")
         print("added", sys.argv[2])
     elif sys.argv[1:2] == ["seed"]:
-        demo = [("officer", "Port of LA Watch Officer"), ("usc", "USC AUV Lab"),
-                ("pacific", "Pacific Hull Inspection"), ("scripps", "Scripps Research")]
+        demo = [("officer", "Port of LA Watch Officer", "authority"), ("usc", "USC AUV Lab", "operator"),
+                ("pacific", "Pacific Hull Inspection", "operator"), ("scripps", "Scripps Research", "operator")]
         lines = ["# Demo accounts (local demo only)", "", "| username | operator | password |", "|---|---|---|"]
-        for username, operator in demo:
+        for username, operator, role in demo:
             pw = f"{username}-{secrets.token_hex(2)}"
-            add_user(username, operator, pw)
+            add_user(username, operator, pw, role)
             lines.append(f"| {username} | {operator} | {pw} |")
         with open(os.path.join(ROOT, "config", "DEMO_ACCOUNTS.md"), "w") as f:
             f.write("\n".join(lines) + "\n")

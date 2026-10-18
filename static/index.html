@@ -162,32 +162,47 @@
   .leaflet-control-attribution { background: oklch(16% 0.018 250 / .7); color: var(--ink-3); font-size: 10px; }
   .leaflet-control-attribution a { color: var(--ink-3); }
 
-  /* start page */
-  #start { position: relative; align-items: safe center; justify-content: safe center; padding: 40px 24px; overflow: auto; }
-  #sonar { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .intro { position: relative; }
-  .intro .copy { pointer-events: none; }
-  .intro .copy .ladder li, .intro .copy .hint { pointer-events: auto; }
-  .intro h1 { text-shadow: 0 0 28px var(--bg), 0 0 8px var(--bg); }
-  .ladder li { cursor: default; transition: border-color .2s, color .2s; }
-  .ladder li:hover { border-top-color: var(--accent); color: var(--ink); }
-  .copy .hint { margin-top: 18px; color: var(--ink-3); }
-  .intro { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 56px; max-width: 1060px; width: 100%; align-items: start; }
-  .intro h1 { font-size: 34px; line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 14px; text-wrap: balance; }
-  .intro p { color: var(--ink-2); margin: 0 0 22px; max-width: 60ch; text-wrap: pretty; }
-  .intro .sub { font-size: 18px; color: var(--ink-2); margin: -4px 0 18px; }
-  .ladder { list-style: none; margin: 8px 0 0; padding: 0; display: flex; gap: 0; }
-  .ladder li { background: linear-gradient(var(--bg), transparent 80%); }
-  .ladder li { flex: 1; padding: 10px 12px 0 0; border-top: 2px solid var(--line); font-size: 13px; color: var(--ink-2); }
-  .ladder b { display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 14px; margin-bottom: 3px; }
+  /* start page: a plain landing page, sonar in the hero card */
+  #start { display: block; overflow: auto; scroll-behavior: smooth; }
+  #start section { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 18px; }
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 480px); gap: 56px; align-items: center; min-height: calc(100vh - 66px); padding-block: 48px !important; }
+  .hero h1 { font-size: clamp(40px, 5.2vw, 64px); line-height: 1.04; font-weight: 600; letter-spacing: -0.03em; margin: 0 0 20px; text-wrap: balance; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero .sub { font-size: 18px; color: var(--ink-2); margin: 0 0 30px; max-width: 46ch; text-wrap: pretty; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .ctas .primary { display: inline-block; padding: 12px 22px; border-radius: 999px; background: var(--accent); border: 0; color: var(--bg); font-weight: 600; font-size: 15px; text-decoration: none; }
+  .ctas .primary:hover { background: oklch(88% 0.1 200); }
+  .ghost-link { color: var(--ink-2); text-decoration: none; font-size: 15px; padding: 12px 18px; border: 1px solid var(--line-strong); border-radius: 999px; }
+  .ghost-link:hover { color: var(--ink); border-color: var(--ink-3); }
+  .scope { margin: 0; background: var(--panel); border: 1px solid var(--line-strong); border-radius: 16px; overflow: hidden; }
+  .scope figcaption { display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); font: 12px/1 var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+  .scope figcaption span:first-child { color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .scope .live { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+  #sonar { display: block; width: 100%; aspect-ratio: 1; }
+  .scope .hint { margin: 0; padding: 10px 16px; border-top: 1px solid var(--line); }
+  .band { padding-block: 72px !important; border-top: 1px solid var(--line); }
+  .band h2 { font-size: 32px; letter-spacing: -0.02em; margin: 0 0 32px; }
+  .ladder { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .ladder li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; font-size: 14px; color: var(--ink-2); cursor: default; transition: border-color .2s; }
+  .ladder li:hover { border-color: var(--line-strong); color: var(--ink); }
+  .ladder .n { display: block; font: 12px var(--mono); color: var(--ink-3); margin-bottom: 18px; }
+  .ladder b { display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 16px; margin-bottom: 4px; }
   .ladder i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-  .rule { color: var(--ink-3); font-size: 14px; margin: 0; }
-  .signin { background: var(--panel); border: 1px solid var(--line-strong); border-radius: 12px; padding: 22px; }
-  .signin h2 { margin-bottom: 4px; }
-  .signin .form { grid-template-columns: 1fr; }
-  .cta { display: flex; flex-direction: column; gap: 8px; }
-  .cta a { display: block; text-align: center; padding: 11px 14px; border-radius: 8px; background: oklch(30% 0.08 150); border: 1px solid oklch(45% 0.12 150); color: var(--ink); font-weight: 600; text-decoration: none; }
-  .cta a.secondary { background: var(--raise); border-color: var(--line-strong); font-weight: 500; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
+  .card h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
+  .card p { margin: 0; color: var(--ink-2); }
+  footer.site { max-height: none; text-align: center; padding: 28px; color: var(--ink-3); font: 12px var(--mono); border-top: 1px solid var(--line); }
+  #signin { width: min(380px, calc(100vw - 32px)); background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 14px; padding: 24px; }
+  #signin::backdrop { background: oklch(10% 0.02 250 / .7); backdrop-filter: blur(3px); }
+  #signin .form { grid-template-columns: 1fr; }
+  #signin .x { position: absolute; top: 12px; right: 12px; }
+  #signin .x button { border: 0; background: transparent; color: var(--ink-3); padding: 4px 8px; }
+  header .site-nav { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+  header .site-nav a { color: var(--ink-2); text-decoration: none; font-size: 14px; padding: 8px 12px; }
+  header .site-nav a:hover { color: var(--ink); }
+  header .site-nav button { border-radius: 999px; padding: 8px 16px; background: var(--accent); color: var(--bg); border: 0; font-weight: 600; }
 
   /* operator portal */
   h2 { font-size: 20px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
@@ -223,8 +238,9 @@
     header .meta { flex-wrap: wrap; gap: 4px 14px; }
   }
   @media (max-width: 900px) {
-    .intro { grid-template-columns: 1fr; gap: 28px; }
-    .ladder { flex-wrap: wrap; } .ladder li { flex: 1 1 45%; }
+    .hero { grid-template-columns: 1fr; min-height: 0; }
+    .ladder { grid-template-columns: 1fr 1fr; } .cards { grid-template-columns: 1fr; }
+    header .site-nav a { display: none; }
     main { flex-direction: column; }
     aside { flex: 0 0 auto; max-width: none; border-left: 0; border-top: 1px solid var(--line); }
     #map, #map2 { flex: 0 0 50vh; }
@@ -237,6 +253,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M5.6 5.6a9 9 0 0 1 12.8 0"/><path d="M8.5 8.5a5 5 0 0 1 7 0"/><path d="M12 14.5V21"/></svg>
     Harbor Ledger
   </div>
+  <nav class="site-nav hide" id="site-nav"><a href="#how">How it works</a><a href="#who-for">Who it's for</a><button onclick="signin.showModal()">Sign in</button></nav>
   <div class="right">
     <nav class="tabs"><a href="/watch" id="nav-watch">Officer console</a><a href="/register" id="nav-register">Operator portal</a><a href="#" class="signout" onclick="logout(); return false">Sign out</a></nav>
     <div class="meta"><span class="who" id="who"></span><span class="clock" id="clock">connecting</span></div>
@@ -244,32 +261,58 @@
 </header>
 
 <main id="start" class="hide">
-  <canvas id="sonar" aria-hidden="true"></canvas>
-  <div class="intro">
+  <section class="hero">
     <div class="copy">
-      <h1>Unknown vehicle in your harbor? Track it.</h1>
-      <p class="sub">Most contacts are booked. We find the one that isn't.</p>
-      <ol class="ladder">
-        <li onmouseenter="sonar.focus(1)" onmouseleave="sonar.focus(null)"><b><i style="background:#9aa3b2"></i>Watch</b>Spotted. Checking bookings.</li>
-        <li onmouseenter="sonar.focus(2)" onmouseleave="sonar.focus(null)"><b><i style="background:#5b8def"></i>Ask</b>Pinged. 10 s to answer.</li>
-        <li onmouseenter="sonar.focus(3)" onmouseleave="sonar.focus(null)"><b><i style="background:#e8b23a"></i>Slow</b>No answer. Watching closer.</li>
-        <li onmouseenter="sonar.focus(4)" onmouseleave="sonar.focus(null)"><b><i style="background:#ef5350"></i>Hold</b>Your call. One card.</li>
-        <li onmouseenter="sonar.focus(0)" onmouseleave="sonar.focus(null)"><b><i style="background:#a98bf5"></i>Hand off</b>You pick. Logged in your name.</li>
-      </ol>
+      <p class="eyebrow">Harbor watch · underwater traffic</p>
+      <h1>Unknown vehicle in your harbor? <em>Track it.</em></h1>
+      <p class="sub">Most contacts are booked. We find the one that isn't, and hand the officer one clear decision.</p>
+      <div class="ctas">
+        <button class="primary" onclick="signin.showModal()">Sign in</button>
+        <a class="ghost-link" href="#how">How it works ↓</a>
+      </div>
+      <div class="ctas hide" id="continue"><a class="primary" href="/watch">Open the officer console</a><a class="ghost-link" href="/register">Operator portal</a></div>
+    </div>
+    <figure class="scope">
+      <figcaption><span><i class="live"></i>Live sonar</span><span>demo</span></figcaption>
+      <canvas id="sonar" aria-hidden="true"></canvas>
       <p class="hint">Hover to identify. Click to ping.</p>
+    </figure>
+  </section>
+
+  <section id="how" class="band">
+    <p class="eyebrow">01 / How it works</p>
+    <h2>Five rungs, climbed only when needed.</h2>
+    <ol class="ladder">
+      <li onmouseenter="sonar.focus(1)" onmouseleave="sonar.focus(null)"><span class="n">01</span><b><i style="background:#9aa3b2"></i>Watch</b>Spotted. Checking bookings.</li>
+      <li onmouseenter="sonar.focus(2)" onmouseleave="sonar.focus(null)"><span class="n">02</span><b><i style="background:#5b8def"></i>Ask</b>Pinged. 10 s to answer.</li>
+      <li onmouseenter="sonar.focus(3)" onmouseleave="sonar.focus(null)"><span class="n">03</span><b><i style="background:#e8b23a"></i>Slow</b>No answer. Watching closer.</li>
+      <li onmouseenter="sonar.focus(4)" onmouseleave="sonar.focus(null)"><span class="n">04</span><b><i style="background:#ef5350"></i>Hold</b>Your call. One card.</li>
+      <li onmouseenter="sonar.focus(0)" onmouseleave="sonar.focus(null)"><span class="n">05</span><b><i style="background:#a98bf5"></i>Hand off</b>You pick. Logged in your name.</li>
+    </ol>
+  </section>
+
+  <section id="who-for" class="band">
+    <p class="eyebrow">02 / Who it's for</p>
+    <h2>One ledger, two sides.</h2>
+    <div class="cards">
+      <div class="card"><h3>Harbor officers</h3><p>A live map of every contact, booked or not. Only the ones that need you reach the queue.</p></div>
+      <div class="card"><h3>Registered operators</h3><p>Book an area and a time window. Your vehicle stays green and out of the way.</p></div>
     </div>
-    <div class="signin">
-      <h2>Sign in</h2>
-      <p class="hint">For the harbor watch and registered operators.</p>
-      <form class="form" id="signin-form" onsubmit="return submitLogin(event)">
-        <div><label>Username</label><input name="username" required maxlength="80" autocomplete="username"></div>
-        <div><label>Password</label><input name="password" type="password" required maxlength="200" autocomplete="current-password"></div>
-        <div><button type="submit" class="confirm" style="width:100%">Sign in</button></div>
-      </form>
-      <div class="cta hide" id="continue"><a href="/watch">Open the officer console</a><a href="/register" class="secondary">Operator portal</a></div>
-      <div class="err" id="login-err"></div>
-    </div>
-  </div>
+  </section>
+
+  <footer class="site">Harbor Ledger · built in one evening</footer>
+
+  <dialog id="signin">
+    <form method="dialog" class="x"><button aria-label="Close">✕</button></form>
+    <h2>Sign in</h2>
+    <p class="hint">For the harbor watch and registered operators.</p>
+    <form class="form" id="signin-form" onsubmit="return submitLogin(event)">
+      <div><label>Username</label><input name="username" required maxlength="80" autocomplete="username"></div>
+      <div><label>Password</label><input name="password" type="password" required maxlength="200" autocomplete="current-password"></div>
+      <div><button type="submit" class="confirm" style="width:100%">Sign in</button></div>
+    </form>
+    <div class="err" id="login-err"></div>
+  </dialog>
 </main>
 
 <main id="watch" class="hide">
@@ -336,7 +379,8 @@ const DEFS = `<defs>
   <radialGradient id="halo"><stop offset="0" stop-color="#9aa8ba" stop-opacity=".28"/><stop offset=".7" stop-color="#9aa8ba" stop-opacity=".08"/><stop offset="1" stop-color="#9aa8ba" stop-opacity="0"/></radialGradient>
 </defs>`;
 
-async function initMap(el) {
+async function initMap(id) {
+  const el = document.getElementById(id);
   const cfg = await (await fetch('/config/assets.json')).json();
   origin = cfg.origin; assets = cfg.assets;
   const m = L.map(el, {zoomControl: false, renderer: L.svg({padding: 0.6})}).setView([origin.lat, origin.lon], 14);
@@ -627,7 +671,7 @@ function startSonar(canvas) {
   function resize() {
     const b = canvas.getBoundingClientRect();
     W = canvas.width = Math.max(1, b.width * dpr); H = canvas.height = Math.max(1, b.height * dpr);
-    cx = W * (W > 900 * dpr ? 0.36 : 0.5); cy = H * 0.5; R = Math.min(W * 0.34, H * 0.46);
+    cx = W / 2; cy = H / 2; R = Math.min(W, H) * 0.45;
   }
   for (let i = 0; i < 7; i++) spawn();
   function tick(now) {
@@ -694,7 +738,11 @@ async function whoami() {
   const op = document.getElementById('op-name');
   if (op && me) op.textContent = me.operator;
   const form = document.getElementById('signin-form');
-  if (form) { form.classList.toggle('hide', !!me); document.getElementById('continue').classList.toggle('hide', !me); }
+  if (form) {
+    document.getElementById('site-nav').classList.toggle('hide', !!me);
+    document.getElementById('continue').classList.toggle('hide', !me);
+    document.getElementById('continue').previousElementSibling.classList.toggle('hide', !!me);
+  }
   return me;
 }
 async function submitLogin(ev) {

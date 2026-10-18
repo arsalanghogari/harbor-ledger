@@ -38,7 +38,9 @@ class Ladder:
         self.deliver_reply(tr, t)
         self.rescore(tr, t)
         if tr.rung == 1:
-            if tr.matched_booking_id is None:
+            if tr.matched_booking_id is not None:
+                self.check_area(tr, self.reg.get(tr.matched_booking_id), t)
+            else:
                 b = self.reg.find_match(tr.x, tr.y, t)
                 if b:
                     self.tag_known(tr, b, t, "registry match")
@@ -121,16 +123,28 @@ class Ladder:
             self.reconcile(tr, b, t)
 
     def reconcile(self, tr, b, t) -> bool:
-        """Valid ping reply. Inside box and window: match. Outside box (drifted): amend the box.
-        Outside window (late): extend it once. All paths drop to rung 1 with no human."""
+        """Valid ping reply. Inside box and window: match. Outside window (late): extend it once.
+        Outside the box: identify the vehicle but keep the booked area as registered and raise an
+        out-of-area flag; the operator and the console both see it. No human in any path."""
         if not b.covers(t):
             if not self.reg.extend_window(b, EXTEND_MIN, t, tr.id) or not b.covers(t):
                 self.log(t, tr, "reconciled", f"BK-{b.id} window cannot be extended again; still unmatched")
                 return False
-        if not b.contains(tr.x, tr.y):
-            self.reg.amend_box(b, tr.x, tr.y, t, tr.id)
         self.tag_known(tr, b, t, "ping reply reconciled with")
+        self.check_area(tr, b, t)
         return True
+
+    def check_area(self, tr, b, t):
+        """Every second for identified vehicles: flag leaving the booked area, clear on return."""
+        d = self.reg.distance_outside(b, tr.x, tr.y)
+        if d > 0 and not tr.out_of_area:
+            tr.out_of_area = True
+            b.note = f"{b.vehicle_id} reported {d:.0f} m outside the booked area at {t:.0f} s; area not amended"
+            self.log(t, tr, "out_of_area", f"{b.vehicle_id} (BK-{b.id}) is {d:.0f} m outside its booked area; area kept as registered, operator notified")
+        elif d == 0 and tr.out_of_area:
+            tr.out_of_area = False
+            b.note = ""
+            self.log(t, tr, "reconciled", f"{b.vehicle_id} (BK-{b.id}) back inside its booked area")
 
     def tag_known(self, tr, b, t, why):
         tr.matched_booking_id = b.id

@@ -83,6 +83,7 @@ class Engine:
                 "depth": tr.depth, "rung": tr.rung, "posterior": tr.posterior, "features": tr.features,
                 "mode": tr.filter.mode, "modes": tr.filter.modes,
                 "booking_id": tr.matched_booking_id, "resolution": tr.resolution, "decision": tr.decision,
+                "out_of_area": tr.out_of_area,
                 "pings": tr.pings, "replied": tr.ping_reply is not None, "rung_since": tr.rung_since,
                 "age": self.t - tr.first_seen, "since_contact": self.t - tr.last_seen,
                 "predicted": [[float(x), float(y)] for x, y in path], "eta": tr.eta,
@@ -100,6 +101,8 @@ class Engine:
                                else "amended" if b.status == "amended" else "active")
         lost = next((tr for tr in self.tracker.tracks.values() if tr.matched_booking_id == b.id and tr.cone), None)
         d["recovery"] = lost.recovery if lost else None
+        d["out_of_area"] = any(tr.matched_booking_id == b.id and tr.out_of_area and tr.ended_at is None
+                               for tr in self.tracker.tracks.values())
         return d
 
     def counters(self):

@@ -1,8 +1,7 @@
-"""Bookings: create with overlap check, find_match, amend_box, extend_window.
-Every change the system makes writes an Event."""
+"""Bookings: create with overlap check, find_match, extend_window, distance_outside.
+Every change the system makes writes an Event. Booked areas are never amended by the system."""
 from .models import Booking
 
-MARGIN_M = 20       # slack added around a found position when a box is amended
 EXTEND_MIN = 30     # one-time window extension for late vehicles
 
 
@@ -60,16 +59,13 @@ class Registry:
     def find_by_ping(self, ping_id):
         return next((b for b in self.ledger.bookings if b.ping_id == ping_id and b.status != "closed"), None)
 
-    def amend_box(self, b: Booking, x, y, t, track_id):
-        """Grow the box to include (x, y) plus margin; status -> amended; log reconciled."""
+    @staticmethod
+    def distance_outside(b: Booking, x, y) -> float:
+        """Metres from (x, y) to the booked box; 0 inside. The box itself is never changed by the
+        system: a registered vehicle outside its authorized area is a flag, not a correction."""
         dx = max(b.x_min - x, x - b.x_max, 0)
         dy = max(b.y_min - y, y - b.y_max, 0)
-        b.x_min, b.x_max = min(b.x_min, x - MARGIN_M), max(b.x_max, x + MARGIN_M)
-        b.y_min, b.y_max = min(b.y_min, y - MARGIN_M), max(b.y_max, y + MARGIN_M)
-        b.status = "amended"
-        b.note = f"vehicle answered ping {round((dx * dx + dy * dy) ** 0.5)} m outside booked box; box extended by system"
-        self.ledger.log(t, track_id, "reconciled", f"BK-{b.id} {b.vehicle_id}: {b.note}")
-        return b
+        return (dx * dx + dy * dy) ** 0.5
 
     def extend_window(self, b: Booking, minutes, t, track_id) -> bool:
         """Extend window_end once. Returns False if the one extension is already used."""

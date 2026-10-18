@@ -16,7 +16,7 @@ class Booking:
     y_max: float
     window_start: float  # scenario seconds
     window_end: float
-    status: str = "scheduled"  # scheduled, active, amended, closed
+    status: str = "scheduled"  # scheduled, active, amended (window extended), closed
     extended: int = 0          # window extensions used (max 1)
     note: str = ""             # reason when amended by the system
 
@@ -67,6 +67,7 @@ class Track:
     recovery: str = ""                              # recovery / patrol line once lost
     card: dict | None = None                        # the Hold card as pushed (rung 4)
     decision: str | None = None                     # the option the officer chose (rung 5)
+    out_of_area: bool = False                       # identified vehicle outside its booked area
 
     @property
     def state(self): return self.filter.x

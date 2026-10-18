@@ -55,6 +55,12 @@ Stack: Python 3.13, FastAPI + uvicorn, numpy, scipy, pytest; Leaflet from CDN, v
     HMAC-signed cookie, one `current_operator()` dependency. No AWS account, no network on demo day;
     Cognito or SSO can replace the module behind the same dependency. No rate limit on `/login`.
 
+14. **Booked areas are never amended.** The design had the system grow a box to include a drifted
+    vehicle that answered its ping. Changed on the team's call: the authorized area stays as the operator
+    registered it, the vehicle is identified, and an out-of-area flag shows on the console row, the map
+    label and the operator's booking. Being outside the authorized area is a signal, not a correction.
+    The 30 min window extension for a late vehicle is unchanged.
+
 ## What was not built
 
 - Raising the real feed rate at rung 3 (stub event only).

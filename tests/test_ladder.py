@@ -14,8 +14,9 @@ def run(decide=True):
 def test_harbor_night_arc():
     eng, snap, (A, B, C, D, E) = run()
     assert A.resolution == "known" and A.matched_booking_id == 1 and A.rung == 1
-    assert B.matched_booking_id == 2 and B.rung == 1 and eng.reg.get(2).status == "amended"
-    assert eng.reg.get(2).contains(B.x, B.y)
+    assert B.matched_booking_id == 2 and B.rung == 1 and B.out_of_area
+    assert eng.reg.get(2).status != "amended" and not eng.reg.get(2).contains(B.x, B.y)  # area kept as registered
+    assert "outside the booked area" in eng.reg.get(2).note
     assert C.matched_booking_id == 3 and eng.reg.get(3).extended == 1 and C.resolution == "known"
     assert C.cone and C.recovery.startswith("Send recovery here")
     assert D.rung == 3 and D.resolution == "lost" and D.cone and D.ended_at < 150

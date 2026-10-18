@@ -66,6 +66,7 @@
   .st.r4 .rung, .st.r4 .now { color: var(--bad); }
   .st.r3 .rung { color: var(--warn); }
   .st.lost .rung { color: var(--violet); }
+  .flag { color: var(--warn); }
   .st { cursor: pointer; transition: background-color .15s; }
   .st:hover, .st.open { background: var(--panel); }
   .st .name::after { content: "›"; display: inline-block; margin-left: 8px; color: var(--ink-3); transition: transform .2s var(--ease); }
@@ -296,7 +297,7 @@ function renderBookings(s) {
   for (const b of s.bookings) {
     bookingById[b.id] = b;
     const bounds = [toLL(b.x_min, b.y_min), toLL(b.x_max, b.y_max)];
-    const color = b.display_status === 'closed' ? '#3a4556' : b.display_status === 'amended' ? '#e8b23a' : '#5c6f8a';
+    const color = b.display_status === 'closed' ? '#3a4556' : b.out_of_area ? '#e8b23a' : '#5c6f8a';
     const tip = `<b>BK-${b.id}</b> ${esc(b.vehicle_id)}<br>${esc(b.operator)} · ${clock(b.window_start)} to ${clock(b.window_end)}<br>${esc(b.display_status)}${b.note ? '<br>' + esc(b.note) : ''}`;
     if (!bookL[b.id]) bookL[b.id] = L.rectangle(bounds, {color, weight: 1, dashArray: '5 5', fillOpacity: 0.03}).bindTooltip(tip, {sticky: true}).addTo(map);
     else bookL[b.id].setBounds(bounds).setStyle({color}).setTooltipContent(tip);
@@ -309,7 +310,7 @@ function renderTracks(s) {
     seen.add(t.id);
     const ll = toLL(t.x, t.y), color = RUNG[t.rung];
     const known = t.booking_id && bookingById[t.booking_id];
-    const name = known ? `${esc(known.vehicle_id)} · known` : t.id;
+    const name = known ? `${esc(known.vehicle_id)} · ${t.out_of_area ? '<span class="flag">out of area</span>' : 'known'}` : t.id;
     const tip = `<b>${t.id}</b> · rung ${t.rung} ${RUNG_NAME[t.rung]}${known ? ` · ${esc(known.vehicle_id)}` : ''}<br>` +
       `${Math.round(t.posterior * 100)}% unauthorized · ${esc(t.mode)} ${(t.modes[t.mode] * 100).toFixed(0)}%<br>` +
       `${t.speed.toFixed(1)} m/s · ${t.depth.toFixed(0)} m deep` +
@@ -399,7 +400,7 @@ function nowText(s, t, known) {
   const ago = v => `${Math.max(0, Math.round(v))} s`;
   const eta = t.eta ? ` · ${t.eta[1]} s from ${esc(t.eta[0].toLowerCase())}` : '';
   switch (t.rung) {
-    case 1: return known ? (known.status === 'amended' ? 'known · booking amended by system' : 'known · inside its booking') : `watching · no registry match for ${ago(t.age)}`;
+    case 1: return known ? (t.out_of_area ? '<span class="flag">known · outside its booked area, area kept as registered</span>' : 'known · inside its booked area') : `watching · no registry match for ${ago(t.age)}`;
     case 2: return t.replied ? 'asked · reply received, reconciling' : `asked · ping sent ${ago(s.t - t.rung_since)} ago, no reply`;
     case 3: return `slowing · advisory and patrol notice drafted, not sent · ${t.pings} pings, no reply${eta}`;
     case 4: return `hold · with the officer for ${ago(s.t - t.rung_since)}${eta}`;
@@ -445,7 +446,7 @@ function renderBookingTable(s) {
   const mine = s.bookings.filter(b => me && (authority || b.operator === me.operator));
   const rows = mine.map(b => `<tr><td>BK-${b.id}</td><td>${esc(b.vehicle_id)}<br><span class="sub">${esc(b.ping_id)}${authority ? ' · ' + esc(b.operator) : ''}</span></td>
     <td class="sub">${Math.round(b.x_min)},${Math.round(b.y_min)} to ${Math.round(b.x_max)},${Math.round(b.y_max)}</td><td class="sub">${clock(b.window_start)}<br>${clock(b.window_end)}</td>
-    <td class="st-${esc(b.display_status)}">${esc(b.display_status)}${b.status === 'amended' ? `<div class="note">amended by system: ${esc(b.note)}</div>` : ''}${b.recovery ? `<div class="rec">${esc(b.recovery)}</div>` : ''}</td></tr>`).join('');
+    <td class="st-${esc(b.display_status)}">${esc(b.display_status)}${b.out_of_area ? '<div class="flag">outside booked area</div>' : ''}${b.note ? `<div class="note">${esc(b.note)}</div>` : ''}${b.recovery ? `<div class="rec">${esc(b.recovery)}</div>` : ''}</td></tr>`).join('');
   document.getElementById('bookings-title').textContent = authority ? 'Registered vehicles' : 'Your bookings';
   document.getElementById('bookings').innerHTML = rows ? `<tr><th>#</th><th>Vehicle</th><th>Box (m)</th><th>Window</th><th>Status</th></tr>${rows}` : '<tr><td class="sub">No bookings yet</td></tr>';
 }

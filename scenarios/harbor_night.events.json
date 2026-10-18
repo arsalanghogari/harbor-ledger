@@ -47,21 +47,21 @@
    "t": 28,
    "track_id": "T-2",
    "kind": "reconciled",
-   "detail": "BK-2 pin-rov-2: vehicle answered ping 77 m outside booked box; box extended by system"
+   "detail": "tagged known: ping reply reconciled with BK-2 (Pacific Hull Inspection, pin-rov-2)"
   },
   {
    "id": 8,
    "t": 28,
    "track_id": "T-2",
-   "kind": "reconciled",
-   "detail": "tagged known: ping reply reconciled with BK-2 (Pacific Hull Inspection, pin-rov-2)"
+   "kind": "rung_change",
+   "detail": "rung 1: known vehicle, automation stands down"
   },
   {
    "id": 9,
    "t": 28,
    "track_id": "T-2",
-   "kind": "rung_change",
-   "detail": "rung 1: known vehicle, automation stands down"
+   "kind": "out_of_area",
+   "detail": "pin-rov-2 (BK-2) is 77 m outside its booked area; area kept as registered, operator notified"
   },
   {
    "id": 10,
@@ -313,13 +313,13 @@
    "ping_id": "PIN-ROV-2",
    "x_min": 100,
    "y_min": 300,
-   "x_max": 396.65495539866305,
+   "x_max": 300,
    "y_max": 500,
    "window_start": -900,
    "window_end": 2400,
-   "status": "amended",
+   "status": "scheduled",
    "extended": 0,
-   "note": "vehicle answered ping 77 m outside booked box; box extended by system"
+   "note": "pin-rov-2 reported 77 m outside the booked area at 28 s; area not amended"
   },
   {
    "id": 3,

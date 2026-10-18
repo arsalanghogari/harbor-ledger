@@ -21,7 +21,7 @@ Open http://localhost:8000. The Harbor Night scenario starts on boot.
 |---|---|
 | `/` | Start page: what the system does, and sign-in. Every other route needs a session |
 | `/watch` | Officer console: map, Hold queue, live status board with per-track history |
-| `/register` | Operator portal: book a dive, instant go / no-go, booking list with system amendments and recovery lines |
+| `/register` | Operator portal: book a dive, instant go / no-go, booking list with out-of-area flags, window extensions and recovery lines |
 | `/control` | Start, pause, reset, 1x / 2x (hidden; for recording) |
 | `GET /snapshot` | Full state once a second; the page just renders it |
 
@@ -52,7 +52,9 @@ Tests:
 | 5 Hand off | Officer decision | Log the Decision under the officer's name, release the chosen drafted action (stub), stop automation | Terminal |
 
 Reconciliation on a valid ping reply is autonomous: inside the booked box and window it is matched;
-drifted outside the box, the box is amended; late, the window is extended once by 30 min.
+late, the window is extended once by 30 min. The booked area itself is never amended by the system:
+an identified vehicle outside it is flagged on the console and the portal, because being outside the
+authorized area is itself a signal.
 
 ## Harbor Night
 
@@ -61,7 +63,7 @@ Five contacts over four minutes. Four resolve with no human touch, one reaches t
 | Contact | Truth | What happens |
 |---|---|---|
 | A | USC glider, registered, inside box | Registry match at t+2 s, tagged known |
-| B | Inspection ROV, 80 m outside its box | Rung 2 at t+15, answers the ping, box amended, back to rung 1 |
+| B | Inspection ROV, 80 m outside its box | Rung 2 at t+15, answers the ping, identified and back to rung 1, flagged out of area; box unchanged |
 | C | Research AUV, window ended 20 min ago, then silent | Window extended, back to rung 1; lost at t+140 with a drift cone and a "send recovery here" line |
 | D | Debris drifting with the current | Rung 3, posterior plateaus at 0.64, lost after 20 s silent, drift cone kept |
 | E | Unknown AUV, 1.5 m/s toward the fuel pier, one 30 degree turn | Rung 1 to 4, card: "Unknown vehicle, 115 s from fuel pier, no reply to ID ping." One click |
@@ -75,7 +77,7 @@ Then on `/register`, a dive booked over E's keep-out circle gets an instant no-g
 - `app/tracker.py`: chi-square 9.21 gating, Hungarian assignment (scipy), existence score with 3-of-5 confirmation and deletion after ~20 misses, drift cone grown 10 min under CV-quiet.
 - `app/scoring.py`: naive-Bayes log-odds over four features (registry match, ping reply, heading to asset, maneuver evidence). Ratios in `config/scoring.json`.
 - `app/ladder.py`: the rung machine, drafted actions, the 90 s timeout, `reconcile()`.
-- `app/registry.py`: bookings, overlap and keep-out checks, amend and extend.
+- `app/registry.py`: bookings, overlap and keep-out checks, window extension, distance outside the booked area.
 - `app/feed.py`: the only mock sensor. `python -m app.feed` regenerates the scenario.
 
 Positions are harbor-local meters (east, north); the map layer converts to lat/lon around `config/assets.json` origin.

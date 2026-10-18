@@ -20,6 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCENARIO = os.path.join(ROOT, "scenarios", "harbor_night.json")
 ASSETS = os.path.join(ROOT, "config", "assets.json")
 SCORING = os.path.join(ROOT, "config", "scoring.json")
+POINTS = os.environ.get("HARBOR_POINTS_FILE", os.path.join(ROOT, "drone_points.txt"))
 TAIL_S = 0           # the run stops with the last contact row
 EDGE_MARGIN_M = 20   # a dive box is drawn once its vehicle is this close to the edge
 GATE_M = 150         # triage correlation gate around an unknown contact
@@ -93,7 +94,9 @@ class Engine:
         tr = self.tracker.tracks.get(track_id)
         if tr is None or tr.ended_at is not None:
             raise ValueError(f"no live track {track_id}")
+        before = len(self.ledger.tasks)
         self.ladder.decide(tr, option, officer, note, self.t)
+        self.append_points(self.ledger.tasks[before:])
 
     # --- triage actions (detail card) ---------------------------------------------------
     def live_track(self, track_id):
@@ -188,6 +191,18 @@ class Engine:
                 "predicted": [{"s": s, **self.latlon(float(path[s][0]), float(path[s][1]))} for s in (30, 60, 120)],
                 "asset_eta": tr.eta, "standoff_m": self.assets_cfg["keepout_radius_m"],
                 "origin": self.assets_cfg["origin"], "reports": task.reports}
+
+    def append_points(self, tasks):
+        """Append each newly published tasking's target and predicted points, one per line."""
+        if not tasks:
+            return
+        with open(POINTS, "a") as f:
+            for task in tasks:
+                j = self.task_json(task)
+                tgt = j["target"]
+                f.write(f"{j['issued_clock']}\t{j['id']}\t{j['track_id']}\ttarget\t{tgt['lat']}\t{tgt['lon']}\n")
+                for p in j["predicted"]:
+                    f.write(f"{j['issued_clock']}\t{j['id']}\t{j['track_id']}\t+{p['s']}s\t{p['lat']}\t{p['lon']}\n")
 
     def tasks_json(self, include_done=False):
         out = [self.task_json(t) for t in self.ledger.tasks]

@@ -103,9 +103,13 @@ def test_registry_overlap_and_keepout_no_go():
     assert made is not None and why is None and made.id == 4
 
 
-def test_drone_tasking_is_published_on_release_and_takes_reports():
+def test_drone_tasking_is_published_on_release_and_takes_reports(tmp_path, monkeypatch):
+    points = tmp_path / "points.txt"
+    monkeypatch.setattr("app.engine.POINTS", str(points))
     eng, _, (*_, E) = run(decide=False)
     eng.decide(E.id, DRONE_OPTION, "duty officer")
+    lines = points.read_text().splitlines()
+    assert [l.split("\t")[3] for l in lines] == ["target", "+30s", "+60s", "+120s"] and all("DT-1" in l for l in lines)
     tasks = eng.tasks_json()
     assert len(tasks) == 1 and tasks[0]["track_id"] == E.id and tasks[0]["authorized_by"] == "duty officer"
     tgt = tasks[0]["target"]

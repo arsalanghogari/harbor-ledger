@@ -411,7 +411,7 @@ function nowText(s, t, known) {
   const ago = v => `${Math.max(0, Math.round(v))} s`;
   const eta = t.eta ? ` · ${t.eta[1]} s from ${esc(t.eta[0].toLowerCase())}` : '';
   switch (t.rung) {
-    case 1: return known ? (t.out_of_area ? '<span class="flag">known · outside its booked area, area kept as registered</span>' : 'known · inside its booked area') : `watching · no registry match for ${ago(t.age)}`;
+    case 1: return known ? (t.out_of_area ? '<span class="flag">known · outside its booked area</span>' : 'known · inside its booked area') : `watching · no registry match for ${ago(t.age)}`;
     case 2: return t.replied ? 'asked · reply received, reconciling' : `asked · ping sent ${ago(s.t - t.rung_since)} ago, no reply`;
     case 3: return `slowing · advisory and patrol notice drafted, not sent · ${t.pings} pings, no reply${eta}`;
     case 4: return `hold · with the officer for ${ago(s.t - t.rung_since)}${eta}`;

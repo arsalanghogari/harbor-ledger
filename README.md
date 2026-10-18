@@ -6,6 +6,8 @@ known vehicles become non-events, unknown ones climb a five-rung ladder, and the
 only sees the contacts that need a human decision. Nothing with an external effect leaves the
 system without a named human's click.
 
+Live: https://harbor-ledger.onrender.com (Render free tier; the first request after idle takes about a minute to wake).
+
 ## Run
 
 ```bash

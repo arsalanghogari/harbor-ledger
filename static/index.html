@@ -465,6 +465,29 @@ function renderBookingTable(s) {
   document.getElementById('bookings').innerHTML = rows ? `<tr><th>#</th><th>Vehicle</th><th>Box (m)</th><th>Window</th><th>Status</th></tr>${rows}` : '<tr><td class="sub">No bookings yet</td></tr>';
 }
 
+let me = null;
+async function whoami() {
+  const r = await fetch('/me');
+  me = r.ok ? await r.json() : null;
+  document.getElementById('who').textContent = me ? me.operator : '';
+  document.querySelector('.right').classList.toggle('hide', !me);
+  const op = document.getElementById('op-name');
+  if (op && me) op.textContent = me.operator;
+  const form = document.getElementById('signin-form');
+  if (form) { form.classList.toggle('hide', !!me); document.getElementById('continue').classList.toggle('hide', !me); }
+  return me;
+}
+async function submitLogin(ev) {
+  ev.preventDefault();
+  const f = ev.target, err = document.getElementById('login-err');
+  const r = await fetch('/login', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username: f.username.value, password: f.password.value})});
+  if (!r.ok) { err.textContent = (await r.json()).detail || 'sign-in failed'; return false; }
+  location.href = '/watch';
+  return false;
+}
+async function logout() { await fetch('/logout', {method: 'POST'}); location.href = '/'; }
+
 let corners = [], drawRect = null;
 function setupRegister() {
   const f = document.getElementById('bookform');

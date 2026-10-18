@@ -71,6 +71,14 @@ Stack: Python 3.13, FastAPI + uvicorn, numpy, scipy, pytest; Leaflet from CDN, v
     and the debris were cut) so the map reads at a glance. The window-extension and lost-track paths
     still exist and are unit tested; they are no longer shown in the demo arc.
 
+17. **Map symbology per the spec, driven by one derived field.** The engine computes `exception` and
+    `rank` per contact each tick (keep-out incursion 1, triage 2, registered lost 3, out of area 4,
+    unknown lost 5) and the page is a lookup on it. Hand-tuned: the incursion holds 10 s after the last
+    ETA hit so IMM jitter does not blink the zone; dive boxes use a 20/40 m show/hide margin; the
+    candidate score is 1 - d / (gate + halo radius). The scenario was rebuilt to the spec's demo
+    (three registered, sio-auv-3 lost, the unknown reappearing beside it). Label collision handling is
+    not implemented.
+
 ## What was not built
 
 - Raising the real feed rate at rung 3 (stub event only).

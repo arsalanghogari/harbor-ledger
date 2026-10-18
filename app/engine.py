@@ -6,7 +6,11 @@ from dataclasses import asdict
 from .feed import Feed
 import math
 
+import numpy as np
+
+from .imm import MODELS
 from .ladder import HIDDEN_OPTION, OPTIONS, Ladder, bearing
+from .scoring import dist_to_polygon
 from .models import Booking, Ledger
 from .registry import Registry
 from .scoring import load_config
@@ -16,7 +20,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCENARIO = os.path.join(ROOT, "scenarios", "harbor_night.json")
 ASSETS = os.path.join(ROOT, "config", "assets.json")
 SCORING = os.path.join(ROOT, "config", "scoring.json")
-TAIL_S = 0  # the run stops with the last contact; C and D go lost inside the arc
+TAIL_S = 0           # the run stops with the last contact row
+EDGE_MARGIN_M = 20   # a dive box is drawn once its vehicle is this close to the edge
+GATE_M = 150         # triage correlation gate around an unknown contact
+HOT_HOLD_S = 10      # a keep-out incursion stays lit this long after the last ETA hit
+RANK = {"keepout_incursion": 1, "triage": 2, "registered_lost": 3, "out_of_area": 4, "unknown_lost": 5, "keepout_approach": 4}
 
 
 class Engine:
@@ -50,6 +58,12 @@ class Engine:
             self.ladder.lose(tr, t)
         for tr in self.tracker.confirmed():
             self.ladder.step(tr, t)
+            if tr.eta or self.inside_zone(tr.x, tr.y):
+                tr.hot_until = t + HOT_HOLD_S  # hold the incursion through ETA jitter
+        for tr in self.tracker.tracks.values():  # uncertainty halo of each lost contact grows under CV-quiet
+            if tr.ended_at is not None and tr.cone:
+                P = tr.last_fix[1] if tr.halo_P is None else tr.halo_P
+                tr.halo_P = MODELS[0].predict(tr.last_fix[0], P)[1]
         self.t += 1
         if self.t > self.feed.end + TAIL_S:
             self.running = False
@@ -77,6 +91,64 @@ class Engine:
         if tr is None or tr.ended_at is not None:
             raise ValueError(f"no live track {track_id}")
         self.ladder.decide(tr, option, officer, note, self.t)
+
+    # --- triage actions (detail card) ---------------------------------------------------
+    def live_track(self, track_id):
+        tr = self.tracker.tracks.get(track_id)
+        if tr is None or tr.ended_at is not None:
+            raise ValueError(f"no live track {track_id}")
+        return tr
+
+    def match(self, track_id, booking_id, action, officer):
+        tr, b = self.live_track(track_id), self.reg.get(booking_id)
+        if b is None:
+            raise ValueError(f"no booking {booking_id}")
+        (self.ladder.confirm_match if action == "confirm" else self.ladder.reject_match)(tr, b, self.t, officer)
+
+    def escalate(self, track_id, officer):
+        self.ladder.escalate(self.live_track(track_id), self.t, officer)
+
+    def ack(self, track_id, officer):
+        self.ladder.ack(self.live_track(track_id), self.t, officer)
+
+    def contact_operator(self, track_id, officer):
+        tr = self.live_track(track_id)
+        if tr.matched_booking_id is None:
+            raise ValueError(f"{track_id} has no registered operator")
+        self.ladder.contact_operator(tr, self.reg.get(tr.matched_booking_id), self.t, officer)
+
+    # --- map symbology: one derived exception per contact ------------------------------
+    def inside_zone(self, x, y):
+        return next((a["name"] for a in self.assets_cfg["assets"] if dist_to_polygon(x, y, a["polygon"]) <= a["standoff_m"]), None)
+
+    def halo_r(self, tr):
+        P = tr.last_fix[1] if tr.halo_P is None else tr.halo_P
+        return float(np.sqrt(np.linalg.eigvalsh(P[:2, :2]).max()))
+
+    def candidates(self, tr):
+        """Lost registered vehicles whose halo reaches the unknown's correlation gate, best first."""
+        out = []
+        for o in self.tracker.tracks.values():
+            if o.ended_at is None or not o.cone or not o.matched_booking_id or o.matched_booking_id in tr.rejected:
+                continue
+            lx, ly = float(o.last_fix[0][0]), float(o.last_fix[0][1])
+            d, r = math.hypot(tr.x - lx, tr.y - ly), self.halo_r(o)
+            if d <= GATE_M + r:
+                b = self.reg.get(o.matched_booking_id)
+                out.append({"track_id": o.id, "booking_id": b.id, "vehicle_id": b.vehicle_id, "operator": b.operator,
+                            "distance_m": round(d), "score": round(100 * max(0.0, 1 - d / (GATE_M + r)))})
+        return sorted(out, key=lambda c: -c["score"])
+
+    def exception(self, tr):
+        """(name, rank) for a live contact; (None, 0) when nominal."""
+        hot = self.t <= tr.hot_until
+        if tr.matched_booking_id:
+            if hot:
+                return "keepout_approach", RANK["keepout_approach"]
+            return ("out_of_area", RANK["out_of_area"]) if tr.out_of_area else (None, 0)
+        if hot:
+            return "keepout_incursion", RANK["keepout_incursion"]
+        return "triage", RANK["triage"]
 
     # --- drone tasking: published after an officer releases it ---------------------------
     def latlon(self, x, y):
@@ -119,21 +191,40 @@ class Engine:
     # --- snapshot polled at 1 Hz ---------------------------------------------------------
     def track_json(self, tr):
         path = tr.filter.predict_ahead(60)[::5]
-        return {"id": tr.id, "x": tr.x, "y": tr.y, "vx": tr.vx, "vy": tr.vy, "speed": tr.speed,
-                "depth": tr.depth, "rung": tr.rung, "posterior": tr.posterior, "features": tr.features,
-                "mode": tr.filter.mode, "modes": tr.filter.modes,
-                "booking_id": tr.matched_booking_id, "resolution": tr.resolution, "decision": tr.decision,
-                "out_of_area": tr.out_of_area,
-                "task": next(({"id": k.id, "status": k.status, "reports": len(k.reports)} for k in self.ledger.tasks if k.track_id == tr.id), None),
-                "pings": tr.pings, "replied": tr.ping_reply is not None, "rung_since": tr.rung_since,
-                "age": self.t - tr.first_seen, "since_contact": self.t - tr.last_seen,
-                "predicted": [[float(x), float(y)] for x, y in path], "eta": tr.eta,
-                "keepout": self.assets_cfg["keepout_radius_m"] if tr.rung >= 3 else None}
+        b = self.reg.get(tr.matched_booking_id) if tr.matched_booking_id else None
+        name, rank = self.exception(tr)
+        d = {"id": tr.id, "x": tr.x, "y": tr.y, "vx": tr.vx, "vy": tr.vy, "speed": tr.speed,
+             "heading_deg": round(bearing(tr.vx, tr.vy)), "depth": tr.depth, "rung": tr.rung,
+             "posterior": tr.posterior, "features": tr.features, "mode": tr.filter.mode, "modes": tr.filter.modes,
+             "booking_id": tr.matched_booking_id, "resolution": tr.resolution, "decision": tr.decision,
+             "out_of_area": tr.out_of_area, "acked": tr.acked, "human": tr.human,
+             "exception": name, "rank": rank, "zone": self.inside_zone(tr.x, tr.y),
+             "time_in_state": self.t - (tr.out_of_area_since if name == "out_of_area" and tr.out_of_area_since is not None else tr.rung_since),
+             "uncertainty_m": round(float(np.sqrt(np.linalg.eigvalsh(tr.filter.P[:2, :2]).max())), 1),
+             "task": next(({"id": k.id, "status": k.status, "reports": len(k.reports)} for k in self.ledger.tasks if k.track_id == tr.id), None),
+             "pings": tr.pings, "replied": tr.ping_reply is not None, "rung_since": tr.rung_since,
+             "age": self.t - tr.first_seen, "since_contact": self.t - tr.last_seen,
+             "predicted": [[float(x), float(y)] for x, y in path], "eta": tr.eta}
+        if b:
+            inside = min(tr.x - b.x_min, b.x_max - tr.x, tr.y - b.y_min, b.y_max - tr.y)
+            tr.box_shown = tr.out_of_area or inside <= EDGE_MARGIN_M or (tr.box_shown and inside <= 2 * EDGE_MARGIN_M)
+            d.update({"registry": {"booking_id": b.id, "operator": b.operator, "vehicle_id": b.vehicle_id, "ping_id": b.ping_id,
+                                   "box": [b.x_min, b.y_min, b.x_max, b.y_max], "window": [b.window_start, b.window_end]},
+                      "distance_outside": round(self.reg.distance_outside(b, tr.x, tr.y)),
+                      "show_box": tr.box_shown})
+        else:
+            d["candidates"] = self.candidates(tr)
+        return d
 
     def lost_json(self, tr):
         x, y, vx, vy = (float(v) for v in tr.last_fix[0])
+        b = self.reg.get(tr.matched_booking_id) if tr.matched_booking_id else None
+        name = "registered_lost" if b else "unknown_lost"
         return {"id": tr.id, "x": x, "y": y, "vx": vx, "vy": vy, "rung": tr.rung, "resolution": tr.resolution,
-                "booking_id": tr.matched_booking_id, "lost_at": tr.ended_at, "last_seen": tr.last_seen,
+                "booking_id": tr.matched_booking_id, "vehicle_id": b.vehicle_id if b else None, "operator": b.operator if b else None,
+                "lost_at": tr.ended_at, "last_seen": tr.last_seen, "since": self.t - tr.last_seen,
+                "exception": name, "rank": RANK[name], "halo_r": round(self.halo_r(tr)), "depth": tr.depth,
+                "heading_deg": round(bearing(vx, vy)), "speed": round(math.hypot(vx, vy), 2),
                 "cone": tr.cone, "recovery": tr.recovery}
 
     def booking_json(self, b):
@@ -147,8 +238,8 @@ class Engine:
         return d
 
     def counters(self):
-        done = [tr for tr in self.tracker.tracks.values() if tr.resolution in ("known", "lost", "handed_off")]
-        auto = sum(1 for tr in done if tr.resolution != "handed_off" and tr.rung < 4)
+        done = [tr for tr in self.tracker.tracks.values() if tr.resolution in ("known", "lost", "handed_off", "reacquired")]
+        auto = sum(1 for tr in done if not tr.human and tr.rung < 4)
         return {"auto": auto, "total": len(done),
                 "external_without_human": sum(1 for a in self.ladder.external if not a["officer"]),
                 "external_total": len(self.ladder.external)}
@@ -161,6 +252,8 @@ class Engine:
                 "queue": [self.ladder.card(tr) for tr in sorted(live, key=lambda tr: -tr.rung_since) if tr.rung == 4],
                 "events": [asdict(e) for e in self.ledger.recent(20)],
                 "counters": self.counters(),
+                "counts": {"registered": sum(1 for tr in live if tr.matched_booking_id), "unknown": sum(1 for tr in live if not tr.matched_booking_id),
+                           "nominal": sum(1 for tr in live if self.exception(tr)[0] is None), "lost": sum(1 for tr in self.tracker.tracks.values() if tr.cone)},
                 "bookings": [self.booking_json(b) for b in self.reg.all()],
                 "options": OPTIONS, "hidden_option": HIDDEN_OPTION}
 

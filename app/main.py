@@ -79,6 +79,17 @@ class BookingIn(BaseModel):
     window_end: float = Seconds
 
 
+class MatchIn(BaseModel):
+    booking_id: int
+    action: Literal["confirm", "reject"]
+
+
+def authority(user: dict = Depends(current_operator)):
+    if user["role"] != "authority":
+        raise HTTPException(403, "harbor authority only")
+    return user
+
+
 class ReportIn(BaseModel):
     status: Literal["acknowledged", "en_route", "on_station", "complete", "cancelled"]
     note: str = Field(default="", max_length=500)
@@ -99,6 +110,25 @@ async def snapshot(user: dict = Depends(current_operator)):
 async def track_events(track_id: str, user: dict = Depends(current_operator)):
     """That track's own audit trail, oldest first."""
     return [asdict(e) for e in engine.ledger.events if e.track_id == track_id[:20]]
+
+
+@app.post("/track/{track_id}/match")
+async def track_match(track_id: str, m: MatchIn, user: dict = Depends(authority)):
+    """Officer confirms or rejects a candidate registry match for an unknown contact."""
+    try:
+        engine.match(track_id[:20], m.booking_id, m.action, user["operator"])
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+    return {"ok": True}
+
+
+@app.post("/track/{track_id}/{action}")
+async def track_action(track_id: str, action: Literal["escalate", "ack", "contact_operator"], user: dict = Depends(authority)):
+    try:
+        getattr(engine, action)(track_id[:20], user["operator"])
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+    return {"ok": True}
 
 
 @app.post("/decision")

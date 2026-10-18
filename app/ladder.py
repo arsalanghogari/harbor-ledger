@@ -145,7 +145,7 @@ class Ladder:
         """Every second for identified vehicles: flag leaving the booked area, clear on return."""
         d = self.reg.distance_outside(b, tr.x, tr.y)
         if d > 0 and not tr.out_of_area:
-            tr.out_of_area = True
+            tr.out_of_area, tr.out_of_area_since, tr.acked = True, t, False
             b.note = f"{b.vehicle_id} reported {d:.0f} m outside the booked area at {t:.0f} s; area not amended"
             self.log(t, tr, "out_of_area", f"{b.vehicle_id} (BK-{b.id}) is {d:.0f} m outside its booked area; area kept as registered, operator notified")
         elif d == 0 and tr.out_of_area:
@@ -182,6 +182,36 @@ class Ladder:
             tr.recovery = f"Drift cone kept for patrol: {tr.id} {cone}"
         self.log(t, tr, "lost", f"no contact for 20 s at rung {tr.rung}; logged as lost. {tr.recovery}")
 
+    # --- triage actions from the detail card (authority only) ---------------------------
+    def confirm_match(self, tr, b, t, officer):
+        """The officer identifies an unknown as a registered vehicle (e.g. one that was lost and
+        reappeared with a dead modem). The old lost record is retired; the contact becomes known."""
+        for old in self.ledger.tracks.values():
+            if old is not tr and old.matched_booking_id == b.id and old.ended_at is not None and old.cone:
+                old.resolution, old.cone, old.recovery = "reacquired", [], ""
+                self.log(t, old, "reconciled", f"{b.vehicle_id} reacquired as {tr.id}; lost record closed")
+        self.pending.pop(tr.id, None)
+        tr.human = True
+        self.tag_known(tr, b, t, f"identity confirmed by {officer} as")
+        self.check_area(tr, b, t)
+
+    def reject_match(self, tr, b, t, officer):
+        if b.id not in tr.rejected:
+            tr.rejected.append(b.id)
+        self.log(t, tr, "reconciled", f"{officer} rejected {b.vehicle_id} (BK-{b.id}) as a match for {tr.id}")
+
+    def escalate(self, tr, t, officer):
+        if tr.rung < 4:
+            self.enter(tr, 4, t, f"escalated by {officer}")
+
+    def ack(self, tr, t, officer):
+        tr.acked = True
+        self.log(t, tr, "rung_change", f"exception acknowledged by {officer}")
+
+    def contact_operator(self, tr, b, t, officer):
+        b.note = f"{officer} asked {b.operator} to contact the harbor watch about {b.vehicle_id} at {t:.0f} s"
+        self.log(t, tr, "reconciled", f"operator {b.operator} contacted about {b.vehicle_id} (stub)")
+
     def decide(self, tr, option, officer, note, t):
         if tr.rung != 4:
             raise ValueError(f"{tr.id} is at rung {tr.rung}, not waiting on a decision")
@@ -193,7 +223,7 @@ class Ladder:
             raise ValueError("closing the channel needs a typed reason")
         from .models import Decision
         self.ledger.decisions.append(Decision(len(self.ledger.decisions) + 1, tr.id, t, OPTIONS + [HIDDEN_OPTION], option, officer, note))
-        tr.rung, tr.rung_since, tr.resolution, tr.decision = 5, t, "handed_off", option
+        tr.rung, tr.rung_since, tr.resolution, tr.decision, tr.acked, tr.human = 5, t, "handed_off", option, True, True
         self.log(t, tr, "decision", f"{officer} chose: {option}" + (f" ({note})" if note else ""))
         if option == OPTIONS[0]:
             self.send_ping(tr, t)

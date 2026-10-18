@@ -10,24 +10,27 @@ from .models import Contact
 
 PING_RANGE_M = 50  # how close a scenario contact must be to a track for the ping to reach it
 
-# Harbor Night: three contacts over 240 s. Speed in m/s, heading in degrees from east (north = 90).
+# Harbor Night: three registered vehicles and one unknown over 240 s. Speed in m/s, heading in degrees from east (north = 90).
 # turn = (seconds after t0, duration s, rad/s): one coordinated turn; noise is added at generation.
 CONTACTS = {
-    "A": dict(t0=0,  t1=240, x=-250, y=-350, speed=0.424, hdg=45.0,  depth=15),  # USC glider, inside its box
-    "B": dict(t0=10, t1=240, x=380,  y=400,  speed=0.224, hdg=153.4, depth=8),   # inspection ROV, ~80 m outside its box
-    "E": dict(t0=90, t1=240, x=173,  y=-453, speed=1.5,   hdg=13.7,  depth=12,   # unknown AUV, 30-degree turn onto the fuel pier
-              turn=(6, 6, 0.0873)),
+    "A": dict(t0=0,   t1=240, x=-250, y=-350, speed=0.424, hdg=45.0,  depth=15),  # USC glider, nominal all along
+    "B": dict(t0=0,   t1=240, x=250,  y=400,  speed=0.25,  hdg=0.0,   depth=8),   # inspection ROV, drifts out of its box at t=200
+    "C": dict(t0=0,   t1=60,  x=0,    y=20,   speed=0.632, hdg=18.4,  depth=25),  # research AUV, goes silent at t=60, lost at ~80
+    "E": dict(t0=100, t1=240, x=108,  y=0,    speed=1.0,   hdg=-20.9, depth=25),  # unknown near C's last fix, no reply, heading for the fuel pier
 }
 TRUTH = {
     "A": {"identity": "USC glider",     "ping_id": "USC-GL-07", "answers_ping": True,  "reply_delay": 3},
     "B": {"identity": "Inspection ROV", "ping_id": "PIN-ROV-2", "answers_ping": True,  "reply_delay": 3},
-    "E": {"identity": "Unknown AUV",    "ping_id": None,        "answers_ping": False, "reply_delay": None},
+    "C": {"identity": "Research AUV",   "ping_id": "SIO-AUV-3", "answers_ping": True,  "reply_delay": 3},
+    "E": {"identity": "Research AUV sio-auv-3 reappearing with a dead acoustic modem", "ping_id": None, "answers_ping": False, "reply_delay": None},
 }
 BOOKINGS = [
     dict(operator="USC AUV Lab", vehicle_id="usc-glider-07", ping_id="USC-GL-07",
          x_min=-350, y_min=-450, x_max=-50, y_max=-150, window_start=-600, window_end=3000),
     dict(operator="Pacific Hull Inspection", vehicle_id="pin-rov-2", ping_id="PIN-ROV-2",
          x_min=100, y_min=300, x_max=300, y_max=500, window_start=-900, window_end=2400),
+    dict(operator="Scripps Research", vehicle_id="sio-auv-3", ping_id="SIO-AUV-3",
+         x_min=-200, y_min=-150, x_max=100, y_max=150, window_start=-600, window_end=3000),
 ]
 
 

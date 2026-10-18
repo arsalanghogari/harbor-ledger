@@ -68,6 +68,13 @@ class Track:
     card: dict | None = None                        # the Hold card as pushed (rung 4)
     decision: str | None = None                     # the option the officer chose (rung 5)
     out_of_area: bool = False                       # identified vehicle outside its booked area
+    out_of_area_since: float | None = None
+    halo_P: object = None                           # lost tracks: covariance grown forward for the uncertainty halo
+    hot_until: float = -1.0                         # keep-out incursion held this long after the ETA last fired
+    box_shown: bool = False                         # dive box drawn (hysteresis around the edge margin)
+    rejected: list = field(default_factory=list)    # booking ids the officer rejected as a match
+    acked: bool = False                             # officer acknowledged the exception
+    human: bool = False                             # identity or outcome settled by a human
 
     @property
     def state(self): return self.filter.x

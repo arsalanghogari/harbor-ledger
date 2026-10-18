@@ -59,16 +59,28 @@ authorized area is itself a signal.
 
 ## Harbor Night
 
-Three contacts over four minutes. Two resolve with no human touch, one reaches the officer.
+Three registered vehicles and one unknown over four minutes, following the map symbology spec's demo.
 
 | Contact | Truth | What happens |
 |---|---|---|
-| A | USC glider, registered, inside box | Registry match at t+2 s, tagged known |
-| B | Inspection ROV, 80 m outside its box | Rung 2 at t+15, answers the ping, identified and back to rung 1, flagged out of area; box unchanged |
-| E | Unknown AUV, 1.5 m/s toward the fuel pier, one 30 degree turn | Rung 1 to 4, card: "Unknown vehicle, 105 s from fuel pier, no reply to ID ping." One click |
+| usc-glider-07 | Registered, inside its box | Nominal the whole time: bare cyan dot and a name |
+| pin-rov-2 | Registered, drifts past its box edge at t=200 | Dive box appears as it nears the edge, then an amber ring and "out of area"; box unchanged |
+| sio-auv-3 | Registered, goes silent at t=60 | Lost at t+80: hollow dashed glyph at the last fix, grey halo growing with time |
+| T-4 | Unknown, surfaces near sio-auv-3's last fix, no ping reply, heads for the fuel pier | Magenta diamond in triage with an amber gate and a dotted link to sio-auv-3; climbs the ladder; the fuel pier zone lights up as rank 1; Hold card at t+100 |
 
-Counters end at **Resolved without a human: 2 of 3** and **External actions without a human: 0**.
+The officer can confirm from the detail card that T-4 is sio-auv-3: the gate, halo and link clear and the map goes quiet.
+Counters end at **Resolved without a human: 3 of 4** and **External actions without a human: 0**.
 Then on `/register`, a dive booked over E's keep-out circle gets an instant no-go naming the contact.
+
+## Map symbology
+
+Management by exception: empty-looking water means nominal. Shape says who (circle registered, diamond
+unknown), fill and stroke say status (cyan or magenta identity, amber needs attention, grey stale, red
+keep-out). Context layers appear only around the contact they explain: a dive box when its vehicle is near
+the edge or outside, a halo for a lost contact, a triage gate and match links for an unknown, a brightened
+keep-out zone when a track enters it within two minutes. Everything else lives in the hover or click card:
+status and time in state, depth, speed, heading, uncertainty when lost, registry record, candidate matches,
+and the actions (acknowledge, contact operator; confirm match, reject, escalate).
 
 ## Drone tasking
 
